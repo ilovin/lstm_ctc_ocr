@@ -1,7 +1,7 @@
-# DIR
 train1/
 log/
 test/
 test_char/
 train_char/
-
+train/
+__pycache__/
