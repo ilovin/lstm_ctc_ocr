@@ -48,6 +48,59 @@ def get_label(buf):
         ret[i] = maps[buf[i]]
     return ret
 
+class DataIterator:
+    def __init__(self, data_dir):
+        # Set FLAGS.charset_size to a small value if available computation power is limited.
+        #truncate_path = data_dir + ('%05d' % FLAGS.charset_size)
+        #print(truncate_path)
+        self.image_names = []
+        for root, sub_folder, file_list in os.walk(data_dir):
+            self.image_names += [os.path.join(root, file_path) for file_path in file_list]
+        random.shuffle(self.image_names)
+        self.labels=[]
+        for idx,file_name in enumerate(self.image_names):
+            code = file_name.split('/')[2].split('_')[1].split('.')[0]
+            code = [SPACE_INDEX if code == SPACE_TOKEN else maps[c] for c in list(code)]
+            self.labels.append(code)
+
+    @property
+    def size(self):
+        return len(self.labels)
+
+    def the_label(self,indexs):
+        labs=[]
+        for i in indexs:
+            labs.append(self.labels[i])
+        return labs
+
+    @staticmethod
+    def data_augmentation(images):
+        if FLAGS.random_flip_up_down:
+            images = tf.image.random_flip_up_down(images)
+        if FLAGS.random_brightness:
+            images = tf.image.random_brightness(images, max_delta=0.3)
+        if FLAGS.random_contrast:
+            images = tf.image.random_contrast(images, 0.8, 1.2)
+        return images
+
+    def input_index_generate_batch(self,index,aug=False):
+        image_batch=[]
+        label_batch=[]
+        for i in index:
+            image_name = self.image_names[i]
+            im = cv2.imread(image_name,0).astype(np.float32)/255.
+            im = cv2.resize(im,(image_width,image_height))
+            # transpose to (160*60) and the step shall be 160
+            im = im.transpose()
+            # in this way, each row is a feature vector
+            image_batch.append(np.array(list(im)))
+            label_batch.append(np.array(self.labels[i]))
+        image_batch=np.array(image_batch)
+        #print(image_batch.shape)
+        batch_inputs,batch_seq_len = pad_input_sequences(image_batch)
+        batch_labels = sparse_tuple_from_label(label_batch)
+        return batch_inputs,batch_seq_len,batch_labels
+
 def sparse_tuple_from_label(sequences, dtype=np.int32):
     """Create a sparse representention of x.
     Args:
@@ -126,58 +179,6 @@ def pad_input_sequences(sequences, maxlen=None, dtype=np.float32,
         else:
             raise ValueError('Padding type "%s" not understood' % padding)
     return x, lengths
-class DataIterator:
-    def __init__(self, data_dir):
-        # Set FLAGS.charset_size to a small value if available computation power is limited.
-        #truncate_path = data_dir + ('%05d' % FLAGS.charset_size)
-        #print(truncate_path)
-        self.image_names = []
-        for root, sub_folder, file_list in os.walk(data_dir):
-            self.image_names += [os.path.join(root, file_path) for file_path in file_list]
-        random.shuffle(self.image_names)
-        self.labels=[]
-        for idx,file_name in enumerate(self.image_names):
-            code = file_name.split('/')[2].split('_')[1].split('.')[0]
-            code = [SPACE_INDEX if code == SPACE_TOKEN else maps[c] for c in list(code)]
-            self.labels.append(code)
-
-    @property
-    def size(self):
-        return len(self.labels)
-
-    def the_label(self,indexs):
-        labs=[]
-        for i in indexs:
-            labs.append(self.labels[i])
-        return labs
-
-    @staticmethod
-    def data_augmentation(images):
-        if FLAGS.random_flip_up_down:
-            images = tf.image.random_flip_up_down(images)
-        if FLAGS.random_brightness:
-            images = tf.image.random_brightness(images, max_delta=0.3)
-        if FLAGS.random_contrast:
-            images = tf.image.random_contrast(images, 0.8, 1.2)
-        return images
-
-    def input_index_generate_batch(self,index,aug=False):
-        image_batch=[]
-        label_batch=[]
-        for i in index:
-            image_name = self.image_names[i]
-            im = cv2.imread(image_name)[:,:,0].astype(np.float32)/255.
-            im = cv2.resize(im,(image_width,image_height))
-            # transpose to (160*60) and the step shall be 160
-            im = im.transpose()
-            # in this way, each row is a feature vector
-            image_batch.append(np.array(list(im)))
-            label_batch.append(np.array(self.labels[i]))
-        image_batch=np.array(image_batch)
-        #print(image_batch.shape)
-        batch_inputs,batch_seq_len = pad_input_sequences(image_batch)
-        batch_labels = sparse_tuple_from_label(label_batch)
-        return batch_inputs,batch_seq_len,batch_labels
 
 
 
