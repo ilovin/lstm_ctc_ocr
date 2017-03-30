@@ -18,17 +18,17 @@ image_height=60
 SPACE_INDEX=0
 SPACE_TOKEN='<space>'
 
-tf.app.flags.DEFINE_string('num_layers', 1, 'number of layer')
-tf.app.flags.DEFINE_string('num_hidden', 32, 'number of hidde')
-tf.app.flags.DEFINE_string('num_epochs', 10000, 'total epochs')
-tf.app.flags.DEFINE_string('batch_size', 32, 'the batch_size')
+tf.app.flags.DEFINE_integer('num_layers', 1, 'number of layer')
+tf.app.flags.DEFINE_integer('num_hidden', 32, 'number of hidde')
+tf.app.flags.DEFINE_integer('num_epochs', 10000, 'total epochs')
+tf.app.flags.DEFINE_integer('batch_size', 32, 'the batch_size')
+tf.app.flags.DEFINE_integer('decay_steps', 2000, 'the lr decay_step')
+tf.app.flags.DEFINE_float('decay_rate', 0.97, 'the lr decay rate')
+tf.app.flags.DEFINE_float('beta1', 0.9, 'parameter of adam optimizer beta1')
+tf.app.flags.DEFINE_float('beta2', 0.999, 'adam parameter beta2')
+tf.app.flags.DEFINE_float('initial_learning_rate', 1e-3, 'inital lr')
+tf.app.flags.DEFINE_float('momentum', 0.9, 'the momentum')
 tf.app.flags.DEFINE_string('log_dir', './log', 'the logging dir')
-tf.app.flags.DEFINE_string('decay_steps', 2000, 'the lr decay_step')
-tf.app.flags.DEFINE_string('decay_rate', 0.97, 'the lr decay rate')
-tf.app.flags.DEFINE_string('beta1', 0.9, 'parameter of adam optimizer beta1')
-tf.app.flags.DEFINE_string('beta2', 0.999, 'adam parameter beta2')
-tf.app.flags.DEFINE_string('initial_learning_rate', 1e-3, 'inital lr')
-tf.app.flags.DEFINE_string('momentum', 0.9, 'the momentum')
 tf.app.flags.DEFINE_string('checkpoint_dir', './checkpoint/', 'the checkpoint dir')
 FLAGS=tf.app.flags.FLAGS
 
