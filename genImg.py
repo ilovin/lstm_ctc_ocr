@@ -6,10 +6,11 @@ import cv2
 def randRGB():
         return (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
+#10+26+26
 char_set='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 def gen_rand():
     buf = ""
-    max_len = random.randint(4,8)
+    max_len = random.randint(4,5)
     for i in range(max_len):
        buf += char_set[random.randint(0,61)]
     return buf
@@ -26,5 +27,5 @@ def run(num,path):
         print(img_path)
 
 if __name__=='__main__':
-    run(64*200,'train')
-    #run(500,'test_char')
+    #run(64*200,'train')
+    run(200,'test')
