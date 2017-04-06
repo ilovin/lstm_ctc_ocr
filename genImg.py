@@ -9,7 +9,7 @@ def randRGB():
 char_set='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 def gen_rand():
     buf = ""
-    max_len = random.randint(4,5)
+    max_len = random.randint(4,8)
     for i in range(max_len):
        buf += char_set[random.randint(0,61)]
     return buf
@@ -26,5 +26,5 @@ def run(num,path):
         print(img_path)
 
 if __name__=='__main__':
-    run(10000,'train1')
+    run(64*200,'train')
     #run(500,'test_char')

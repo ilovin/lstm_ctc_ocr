@@ -1,3 +1,5 @@
-## 使用说明
-1. `python genImg.py` 在`./train` 文件下生成1w张图片格式为 `00001_charname.png`
-2. `utils.py` 中定义了一些变量，和工具
+## how to use
+1. `python genImg.py` to generate the traning images in `train/` and the file name shall has the format of `00001_name.png`
+2. `python lstm_ocr.py` to training
+Notice that,
+Some tools and parameters can be found in `utils.py`

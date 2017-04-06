@@ -7,6 +7,7 @@ import cv2,time
 import logging
 from tensorflow.python.client import device_lib
 from tensorflow.python.client import timeline
+import warpctc_tensorflow
 import utils
 
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID" 
@@ -14,10 +15,10 @@ os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
 FLAGS=utils.FLAGS
 #26*2 + 10 digit + blank + space
 num_classes=utils.num_classes
-num_train_samples = utils.num_train_samples # 12800
+num_train_samples = utils.num_train_samples # 10000
 
 num_features=utils.num_features
-num_batches_per_epoch = int(num_train_samples/FLAGS.batch_size) # example: 12800/64
+num_batches_per_epoch = int(num_train_samples/FLAGS.batch_size) # 10000/32
 
 logger = logging.getLogger('Traing for ocr using LSTM+CTC')
 logger.setLevel(logging.INFO)
@@ -81,7 +82,8 @@ with graph.as_default():
             FLAGS.decay_steps,
             FLAGS.decay_rate,staircase=True)
 
-    loss = tf.nn.ctc_loss(labels=labels,inputs=logits, sequence_length=seq_len)
+    with tf.get_default_graph()._kernel_label_map({'CTCLoss':'WarpCTC'}):
+        loss = tf.nn.ctc_loss(labels=labels,inputs=logits, sequence_length=seq_len)
     cost = tf.reduce_mean(loss)
    
     #optimizer = tf.train.MomentumOptimizer(initial_learning_rate,
@@ -103,13 +105,8 @@ with graph.as_default():
 
 
 def train():
-    print('loading train data, please wait---------------------',end=' ')
+    print('loading data, please wait---------------------')
     train_feeder=utils.DataIterator(data_dir='./train/')
-    print('get image: ',train_feeder.size)
-    print('loading validation data, please wait---------------------',end=' ')
-    val_feeder=utils.DataIterator(data_dir='./test/')
-    print('get image: ',val_feeder.size)
-
     config=tf.ConfigProto(log_device_placement=False,allow_soft_placement=False)
     with tf.Session(graph=graph,config=config) as sess:
         sess.run(tf.global_variables_initializer())
@@ -126,10 +123,6 @@ def train():
         # the cuda trace
         #run_metadata = tf.RunMetadata()
         #trace_file = open('timeline.ctf.json','w')
-        val_inputs,val_seq_len,val_labels=val_feeder.input_index_generate_batch()
-        val_feed={inputs: val_inputs,
-                  labels: val_labels,
-                 seq_len: val_seq_len}
         for cur_epoch in range(FLAGS.num_epochs):
             shuffle_idx=np.random.permutation(num_train_samples)
             train_cost = train_err=0
@@ -137,8 +130,7 @@ def train():
             batch_time = time.time()
             #the tracing part
             for cur_batch in range(num_batches_per_epoch):
-                if (cur_batch+1)%40==0:
-                    print('batch',cur_batch,': time',time.time()-batch_time)
+                print('batch',cur_batch,': time',time.time()-batch_time)
                 batch_time = time.time()
                 indexs = [shuffle_idx[i%num_train_samples] for i in range(cur_batch*FLAGS.batch_size,(cur_batch+1)*FLAGS.batch_size)]
                 batch_inputs,batch_seq_len,batch_labels=train_feeder.input_index_generate_batch(indexs)
@@ -146,7 +138,6 @@ def train():
                         labels:batch_labels,
                         seq_len:batch_seq_len}
                 #_,batch_cost, the_err,d,lr,train_summary,step = sess.run([optimizer,cost,lerr,decoded[0],learning_rate,merged_summay,global_step],feed)
-                #_,batch_cost, the_err,d,lr,step = sess.run([optimizer,cost,lerr,decoded[0],learning_rate,global_step],feed)
                 #the_err,d,lr = sess.run([lerr,decoded[0],learning_rate])
 
                 ## the tracing part
@@ -174,14 +165,17 @@ def train():
 
                 #err,d,lr=sess.run(lerr,decoded[0],learning_rate,feed_dict=feed)
                 #train_err+=the_err*FLAGS.batch_size
-            lr,d,lastbatch_err,_ = sess.run([learning_rate,decoded[0],lerr,optimizer],val_feed)
+            _,lr,d,lastbatch_err = sess.run([optimizer,learning_rate,decoded[0],lerr],feed)
             dense_decoded = tf.sparse_tensor_to_dense(d, default_value=-1).eval(session=sess)
-            # print the decode result
-            acc = utils.accuracy_calculation(val_feeder.labels,dense_decoded,ignore_value=-1)
+            for i, seq in enumerate(dense_decoded):
+                seq = [s for s in seq if s != -1]
+                print('Sequence %d' % i, end='  ')
+                print('Original:\n%s' % train_feeder.the_label(indexs)[i])
+                print('Decoded:\n%s' % seq)
             train_cost/=num_train_samples
             #train_err/=num_train_samples
-            log = "Epoch {}/{}, accuracy = {:.3f},train_cost = {:.3f}, lastbatch_err = {:.3f}, time = {:.3f},lr={:.10f}"
-            print(log.format(cur_epoch+1,FLAGS.num_epochs,acc,train_cost,lastbatch_err,time.time()-start,lr))
+            log = "Epoch {}/{}, train_cost = {:.3f}, lastbatch_err = {:.3f}, time = {:.3f},lr={:.10f}"
+            print(log.format(cur_epoch+1,FLAGS.num_epochs,train_cost,lastbatch_err,time.time()-start,lr))
         graph.finalize()
 
 
