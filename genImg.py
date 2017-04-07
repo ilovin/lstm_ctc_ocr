@@ -10,9 +10,9 @@ def randRGB():
 char_set='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 def gen_rand():
     buf = ""
-    max_len = random.randint(4,5)
+    max_len = random.randint(4,6)
     for i in range(max_len):
-       buf += char_set[random.randint(0,61)]
+       buf += random.choice(char_set)
     return buf
 def run(num,path):
     captcha=ImageCaptcha(fonts=['./fonts/Ubuntu-M.ttf'])
@@ -21,11 +21,11 @@ def run(num,path):
     for i in range(num):
         theChars=gen_rand()
         data=captcha.generate(theChars)
-        img_name= '{:05d}'.format(i)+'_'+theChars+'.png'
+        img_name= '{:08d}'.format(i)+'_'+theChars+'.png'
         img_path=path+'/'+img_name
         captcha.write(theChars,img_path)
         print(img_path)
 
 if __name__=='__main__':
-    #run(64*200,'train')
-    run(200,'test')
+    run(64*2000,'train')
+    run(400,'test')

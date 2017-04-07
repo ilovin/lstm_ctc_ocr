@@ -9,7 +9,7 @@ from tensorflow.python.client import device_lib
 #26*2 + 10 digit + blank + space
 num_classes=26+26+10+1+1
 #num_classes=10+1+1
-num_train_samples = 12800
+num_train_samples = 128000
 
 num_features=60
 image_width=160
@@ -18,23 +18,26 @@ image_height=60
 SPACE_INDEX=0
 SPACE_TOKEN=''
 
+tf.app.flags.DEFINE_boolean('restore', True, 'whether to restore from the latest checkpoint')
+
 tf.app.flags.DEFINE_integer('num_layers', 2, 'number of layer')
-tf.app.flags.DEFINE_integer('num_hidden', 64, 'number of hidden')
-tf.app.flags.DEFINE_integer('num_epochs', 10000, 'total epochs')
+tf.app.flags.DEFINE_integer('num_hidden', 100, 'number of hidden')
+tf.app.flags.DEFINE_integer('num_epochs', 10000, 'maximum epochs')
 tf.app.flags.DEFINE_integer('batch_size', 64, 'the batch_size')
-tf.app.flags.DEFINE_integer('decay_steps', 2000, 'the lr decay_step')
 tf.app.flags.DEFINE_integer('save_steps', 1000, 'the step to save checkpoint')
 
-tf.app.flags.DEFINE_float('decay_rate', 0.95, 'the lr decay rate')
+tf.app.flags.DEFINE_float('initial_learning_rate', 1e-3, 'inital lr')
+
+tf.app.flags.DEFINE_float('decay_rate', 0.9, 'the lr decay rate')
 tf.app.flags.DEFINE_float('beta1', 0.9, 'parameter of adam optimizer beta1')
 tf.app.flags.DEFINE_float('beta2', 0.999, 'adam parameter beta2')
-tf.app.flags.DEFINE_float('initial_learning_rate', 1e-3, 'inital lr')
+
+tf.app.flags.DEFINE_integer('decay_steps', 10000, 'the lr decay_step for momentum optimizer')
 tf.app.flags.DEFINE_float('momentum', 0.9, 'the momentum')
 
 tf.app.flags.DEFINE_string('log_dir', './log', 'the logging dir')
 tf.app.flags.DEFINE_string('checkpoint_dir', './checkpoint/', 'the checkpoint dir')
 
-tf.app.flags.DEFINE_boolean('restore', True, 'whether to restore from checkpoint')
 FLAGS=tf.app.flags.FLAGS
 
 num_batches_per_epoch = int(num_train_samples/FLAGS.batch_size)
@@ -55,9 +58,6 @@ def get_label(buf):
 
 class DataIterator:
     def __init__(self, data_dir):
-        # Set FLAGS.charset_size to a small value if available computation power is limited.
-        #truncate_path = data_dir + ('%05d' % FLAGS.charset_size)
-        #print(truncate_path)
         self.image_names = []
         self.image = []
         self.labels=[]
@@ -141,7 +141,7 @@ def accuracy_calculation(original_seq,decoded_seq,ignore_value=-1,isPrint = True
     for i,origin_label in enumerate(original_seq):
         decoded_label  = [j for j in decoded_seq[i] if j!=ignore_value]
         if isPrint:
-            print('seq {0:4d} origin: {1} decoded:{2}'.format(i,origin_label,decoded_label))
+            print('seq{0:4d}: origin: {1} decoded:{2}'.format(i,origin_label,decoded_label))
         if origin_label == decoded_label: count+=1
     return count*1.0/len(original_seq)
 

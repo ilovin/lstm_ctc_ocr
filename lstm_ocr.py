@@ -76,19 +76,19 @@ with graph.as_default():
    
     global_step = tf.Variable(0,trainable=False)
    
-    learning_rate=tf.train.exponential_decay(FLAGS.initial_learning_rate,
-            global_step, 
-            FLAGS.decay_steps,
-            FLAGS.decay_rate,staircase=True)
 
     loss = tf.nn.ctc_loss(labels=labels,inputs=logits, sequence_length=seq_len)
     cost = tf.reduce_mean(loss)
+
+    #learning_rate=tf.train.exponential_decay(FLAGS.initial_learning_rate,
+    #        global_step, 
+    #        FLAGS.decay_steps,
+    #        FLAGS.decay_rate,staircase=True)
    
-    #optimizer = tf.train.MomentumOptimizer(initial_learning_rate,
-    optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate,
-            momentum=FLAGS.momentum).minimize(cost,global_step=global_step)
-    #optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate,
-    #        beta1=FLAGS.beta1,beta2=FLAGS.beta2).minimize(loss,global_step=global_step)
+    #optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate,
+    #        momentum=FLAGS.momentum).minimize(cost,global_step=global_step)
+    optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS.initial_learning_rate,
+            beta1=FLAGS.beta1,beta2=FLAGS.beta2).minimize(loss,global_step=global_step)
    
     # Option 2: tf.contrib.ctc.ctc_beam_search_decoder
     # (it's slower but you'll get better results)
@@ -97,9 +97,10 @@ with graph.as_default():
    
     # Inaccuracy: label error rate
     lerr = tf.reduce_mean(tf.edit_distance(tf.cast(decoded[0], tf.int32), labels))
-    #tf.summary.scalar('cost',cost)
-    #tf.summary.scalar('lerr',lerr)
-    #merged_summay = tf.summary.merge_all()
+
+    tf.summary.scalar('cost',cost)
+    tf.summary.scalar('lerr',lerr)
+    merged_summay = tf.summary.merge_all()
 
 
 def train():
@@ -137,7 +138,7 @@ def train():
             batch_time = time.time()
             #the tracing part
             for cur_batch in range(num_batches_per_epoch):
-                if (cur_batch+1)%40==0:
+                if (cur_batch+1)%100==0:
                     print('batch',cur_batch,': time',time.time()-batch_time)
                 batch_time = time.time()
                 indexs = [shuffle_idx[i%num_train_samples] for i in range(cur_batch*FLAGS.batch_size,(cur_batch+1)*FLAGS.batch_size)]
@@ -149,8 +150,12 @@ def train():
                 #_,batch_cost, the_err,d,lr,step = sess.run([optimizer,cost,lerr,decoded[0],learning_rate,global_step],feed)
                 #the_err,d,lr = sess.run([lerr,decoded[0],learning_rate])
 
-                ## the tracing part
+                # if summary is needed
+                #batch_cost,step,train_summary,_ = sess.run([cost,global_step,merged_summay,optimizer],feed)
                 batch_cost,step,_ = sess.run([cost,global_step,optimizer],feed)
+                #calculate the cost
+                train_cost+=batch_cost*FLAGS.batch_size
+                ## the tracing part
                 #_,batch_cost,the_err,step,lr,d = sess.run([optimizer,cost,lerr,
                 #    global_step,learning_rate,decoded[0]],feed)
                     #options=tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE),
@@ -159,39 +164,24 @@ def train():
                 #race_file.write(trace.generate_chrome_trace_format())
                 #trace_file.close()
 
-                #d=decoded[0].eval()
-                #lr=learning_rate.eval()
-
                 #train_writer.add_summary(train_summary,step)
+
                 # save the checkpoint
                 if step%FLAGS.save_steps == 1:
                     if not os.path.isdir(FLAGS.checkpoint_dir):
                         os.mkdir(FLAGS.checkpoint_dir)
                     logger.info('save the checkpoint of{0}',format(step))
                     saver.save(sess,os.path.join(FLAGS.checkpoint_dir,'ocr-model'),global_step=step)
-                #calculate the cost
-                train_cost+=batch_cost*FLAGS.batch_size
-
-                #err,d,lr=sess.run(lerr,decoded[0],learning_rate,feed_dict=feed)
                 #train_err+=the_err*FLAGS.batch_size
-            lr,d,lastbatch_err,_ = sess.run([learning_rate,decoded[0],lerr,optimizer],val_feed)
+            d,lastbatch_err,_ = sess.run([decoded[0],lerr,optimizer],val_feed)
             dense_decoded = tf.sparse_tensor_to_dense(d, default_value=-1).eval(session=sess)
             # print the decode result
             acc = utils.accuracy_calculation(val_feeder.labels,dense_decoded,ignore_value=-1)
             train_cost/=num_train_samples
             #train_err/=num_train_samples
-            log = "Epoch {}/{}, accuracy = {:.3f},train_cost = {:.3f}, lastbatch_err = {:.3f}, time = {:.3f},lr={:.10f}"
-            print(log.format(cur_epoch+1,FLAGS.num_epochs,acc,train_cost,lastbatch_err,time.time()-start,lr))
+            log = "Epoch {}/{}, accuracy = {:.3f},train_cost = {:.3f}, lastbatch_err = {:.3f}, time = {:.3f}"
+            print(log.format(cur_epoch+1,FLAGS.num_epochs,acc,train_cost,lastbatch_err,time.time()-start))
         graph.finalize()
-
-
-
-        #saver=tf.train.Saver()
-
-        #train_writer=tf.summary.FileWriter(FLAGS.log_dir+'/train',sess.graph)
-        #try:
-        #    while not coord.should_stop():
-        #        start_time=time.time()
         
 
 if __name__ == '__main__':
