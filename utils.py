@@ -26,7 +26,7 @@ tf.app.flags.DEFINE_integer('num_epochs', 10000, 'maximum epochs')
 tf.app.flags.DEFINE_integer('batch_size', 64, 'the batch_size')
 tf.app.flags.DEFINE_integer('save_steps', 1000, 'the step to save checkpoint')
 
-tf.app.flags.DEFINE_float('initial_learning_rate', 1e-3, 'inital lr')
+tf.app.flags.DEFINE_float('initial_learning_rate', 1e-4, 'inital lr')
 
 tf.app.flags.DEFINE_float('decay_rate', 0.9, 'the lr decay rate')
 tf.app.flags.DEFINE_float('beta1', 0.9, 'parameter of adam optimizer beta1')
@@ -36,7 +36,7 @@ tf.app.flags.DEFINE_integer('decay_steps', 10000, 'the lr decay_step for momentu
 tf.app.flags.DEFINE_float('momentum', 0.9, 'the momentum')
 
 tf.app.flags.DEFINE_string('log_dir', './log', 'the logging dir')
-tf.app.flags.DEFINE_string('checkpoint_dir', './checkpoint/', 'the checkpoint dir')
+tf.app.flags.DEFINE_string('checkpoint_dir', './checkpoint_no_drop/', 'the checkpoint dir')
 
 FLAGS=tf.app.flags.FLAGS
 

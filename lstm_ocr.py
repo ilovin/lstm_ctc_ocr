@@ -41,10 +41,14 @@ with graph.as_default():
     # Can be:
     #   tf.nn.rnn_cell.RNNCell
     #   tf.nn.rnn_cell.GRUCell
-    #cell=tf.contrib.rnn.LSTMCell(FLAGS.num_hidden, state_is_tuple=True)
-    
+    #cell = tf.contrib.rnn.LSTMCell(FLAGS.num_hidden, state_is_tuple=True)
+    #cell = tf.contrib.rnn.DropoutWrapper(cell = cell,output_keep_prob=0.8)
+    #
+    #cell1 = tf.contrib.rnn.LSTMCell(FLAGS.num_hidden, state_is_tuple=True)
+    #cell1 = tf.contrib.rnn.DropoutWrapper(cell = cell1,output_keep_prob=0.8)
     # Stacking rnn cells
-    stack = tf.contrib.rnn.MultiRNNCell([tf.contrib.rnn.LSTMCell(FLAGS.num_hidden,state_is_tuple=True) for i in range(FLAGS.num_layers)] , state_is_tuple=True)
+    #stack = tf.contrib.rnn.MultiRNNCell([cell,cell1] , state_is_tuple=True)
+    stack = tf.contrib.rnn.MultiRNNCell([tf.contrib.rnn.LSTMCell(FLAGS.num_hidden,state_is_tuple=True) for _ in range(FLAGS.num_layers)] , state_is_tuple=True)
     
     # The second output is the last state and we will no use that
     outputs, _ = tf.nn.dynamic_rnn(stack, inputs, seq_len, dtype=tf.float32)
@@ -60,10 +64,10 @@ with graph.as_default():
     # see https://www.tensorflow.org/versions/r0.9/api_docs/python/contrib.layers.html#initializers
     W = tf.Variable(tf.truncated_normal([FLAGS.num_hidden,
                                          num_classes],
-                                        stddev=0.1),name='W')
+                                        stddev=0.1,dtype=tf.float32),name='W')
     # Zero initialization
     # Tip: Is tf.zeros_initializer the same?
-    b = tf.Variable(tf.constant(0., shape=[num_classes],name='b'))
+    b = tf.Variable(tf.constant(0., dtype = tf.float32,shape=[num_classes],name='b'))
    
     # Doing the affine projection
     logits = tf.matmul(outputs, W) + b
@@ -176,7 +180,7 @@ def train():
             d,lastbatch_err,_ = sess.run([decoded[0],lerr,optimizer],val_feed)
             dense_decoded = tf.sparse_tensor_to_dense(d, default_value=-1).eval(session=sess)
             # print the decode result
-            acc = utils.accuracy_calculation(val_feeder.labels,dense_decoded,ignore_value=-1)
+            acc = utils.accuracy_calculation(val_feeder.labels,dense_decoded,ignore_value=-1,isPrint=False)
             train_cost/=num_train_samples
             #train_err/=num_train_samples
             log = "Epoch {}/{}, accuracy = {:.3f},train_cost = {:.3f}, lastbatch_err = {:.3f}, time = {:.3f}"
