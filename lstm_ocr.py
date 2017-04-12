@@ -4,7 +4,7 @@ import numpy as np
 import tensorflow as tf
 import random
 import cv2,time
-import logging
+import logging,datetime
 from tensorflow.python.client import device_lib
 from tensorflow.python.client import timeline
 import utils
@@ -14,10 +14,8 @@ os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
 FLAGS=utils.FLAGS
 #26*2 + 10 digit + blank + space
 num_classes=utils.num_classes
-num_train_samples = utils.num_train_samples # 12800
 
 num_features=utils.num_features
-num_batches_per_epoch = int(num_train_samples/FLAGS.batch_size) # example: 12800/64
 
 logger = logging.getLogger('Traing for ocr using LSTM+CTC')
 logger.setLevel(logging.INFO)
@@ -111,9 +109,13 @@ def train():
     print('loading train data, please wait---------------------',end=' ')
     train_feeder=utils.DataIterator(data_dir='./train/')
     print('get image: ',train_feeder.size)
+
     print('loading validation data, please wait---------------------',end=' ')
     val_feeder=utils.DataIterator(data_dir='./test/')
     print('get image: ',val_feeder.size)
+
+    num_train_samples = train_feeder.size # 12800
+    num_batches_per_epoch = int(num_train_samples/FLAGS.batch_size) # example: 12800/64
 
     config=tf.ConfigProto(log_device_placement=False,allow_soft_placement=False)
     with tf.Session(graph=graph,config=config) as sess:
@@ -183,8 +185,10 @@ def train():
             acc = utils.accuracy_calculation(val_feeder.labels,dense_decoded,ignore_value=-1,isPrint=False)
             train_cost/=num_train_samples
             #train_err/=num_train_samples
-            log = "Epoch {}/{}, accuracy = {:.3f},train_cost = {:.3f}, lastbatch_err = {:.3f}, time = {:.3f}"
-            print(log.format(cur_epoch+1,FLAGS.num_epochs,acc,train_cost,lastbatch_err,time.time()-start))
+            now = datetime.datetime.now()
+            log = "{}-{} {}:{}:{} Epoch {}/{}, accuracy = {:.3f},train_cost = {:.3f}, lastbatch_err = {:.3f}, time = {:.3f}"
+            print(log.format(now.month,now.day,now.hour,now.minute,now.second,
+                cur_epoch+1,FLAGS.num_epochs,acc,train_cost,lastbatch_err,time.time()-start))
         graph.finalize()
         
 

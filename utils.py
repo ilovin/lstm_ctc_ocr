@@ -8,8 +8,7 @@ from tensorflow.python.client import device_lib
 
 #26*2 + 10 digit + blank + space
 num_classes=26+26+10+1+1
-#num_classes=10+1+1
-num_train_samples = 128000
+#num_train_samples = 128000
 
 num_features=60
 image_width=160
@@ -36,11 +35,11 @@ tf.app.flags.DEFINE_integer('decay_steps', 10000, 'the lr decay_step for momentu
 tf.app.flags.DEFINE_float('momentum', 0.9, 'the momentum')
 
 tf.app.flags.DEFINE_string('log_dir', './log', 'the logging dir')
-tf.app.flags.DEFINE_string('checkpoint_dir', './checkpoint_no_drop/', 'the checkpoint dir')
+tf.app.flags.DEFINE_string('checkpoint_dir', './checkpoint_color/', 'the checkpoint dir')
 
 FLAGS=tf.app.flags.FLAGS
 
-num_batches_per_epoch = int(num_train_samples/FLAGS.batch_size)
+#num_batches_per_epoch = int(num_train_samples/FLAGS.batch_size)
 
 maps  = {}
 maps_value = 11
@@ -66,6 +65,8 @@ class DataIterator:
                 image_name = os.path.join(root,file_path)
                 self.image_names.append(image_name)
                 im = cv2.imread(image_name,0).astype(np.float32)/255.
+                #resize to same height, different width will consume time on padding
+                #im = cv2.resize(im,(im.shape[1],image_height))
                 im = cv2.resize(im,(image_width,image_height))
                 # transpose to (160*60) and the step shall be 160
                 # in this way, each row is a feature vector
@@ -111,6 +112,7 @@ class DataIterator:
             lengths = np.asarray([len(s) for s in sequences], dtype=np.int64)
             return sequences,lengths
         batch_inputs,batch_seq_len = get_input_lens(np.array(image_batch))
+        #batch_inputs,batch_seq_len = pad_input_sequences(np.array(image_batch))
         batch_labels = sparse_tuple_from_label(label_batch)
         return batch_inputs,batch_seq_len,batch_labels
 
