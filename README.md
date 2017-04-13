@@ -8,9 +8,11 @@
 - [captcha](https://pypi.python.org/pypi/captcha)
 
 ### Some details
-![](http://omy9d4djr.bkt.clouddn.com/markdown-img-paste-20170407164955997.png)  
+The training data:  
+![data](https://ooo.0o0.ooo/2017/04/13/58ef08ab6af03.png)  
+
 Notice that, Some tools and parameters can be found in `utils_*.py`  
-if you using your training data, the height of the image shall be the same, and the suffix of the image shall be `png` or you can modify the code in `utils_*.py` from`tf.image.decode_png` to anything you like   
+if you want use your training data, the height of the image shall be the same, and the suffix of the image shall be `png` or you can modify the code in `utils_*.py` from`tf.image.decode_png` to anything you need  
 
 ### Result
 The accurary is more than 95%  
