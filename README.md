@@ -1,8 +1,11 @@
 ## How to use
+1. run `python genImg.py` to generate the train images in `train/`, validation set in `test/`and the file name shall has the format of `00000001_name.png`, the number of process is set to `16`.
+2. `cd standard` or `cd warpCTC`
+3. run `python lstm_ocr.py` to training    
+
+Notice that,  
 - standard : use `tf.nn.ctc_loss` to calculate the ctc loss
 - warpCTC : please install the [warpCTC tensorflow_binding](https://github.com/baidu-research/warp-ctc/tree/master/tensorflow_bindi ng) first
-1. run `python genImg.py` to generate the train images in `train/`, validation set in `test/`and the file name shall has the format of `00000001_name.png`, the number of process is set to `16`.
-2. run `python lstm_ocr.py` to training  
 
 ### Dependency
 - python 3  
@@ -11,6 +14,7 @@
 - (optional) [warpCTC tensorflow_binding](https://github.com/baidu-research/warp-ctc/tree/master/tensorflow_bindi ng)
 
 ### Some details
+
 The training data:  
 ![data](https://ooo.0o0.ooo/2017/04/13/58ef08ab6af03.png)  
 
