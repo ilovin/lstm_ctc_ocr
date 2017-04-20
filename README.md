@@ -1,4 +1,6 @@
 ## How to use
+- standard : use `tf.nn.ctc_loss` to calculate the ctc loss
+- warpCTC : please install the [warpCTC tensorflow_binding](https://github.com/baidu-research/warp-ctc/tree/master/tensorflow_bindi ng) first
 1. run `python genImg.py` to generate the train images in `train/`, validation set in `test/`and the file name shall has the format of `00000001_name.png`, the number of process is set to `16`.
 2. run `python lstm_ocr.py` to training  
 
@@ -6,6 +8,7 @@
 - python 3  
 - tensorflow 1.0.1  
 - [captcha](https://pypi.python.org/pypi/captcha)
+- (optional) [warpCTC tensorflow_binding](https://github.com/baidu-research/warp-ctc/tree/master/tensorflow_bindi ng)
 
 ### Some details
 The training data:  

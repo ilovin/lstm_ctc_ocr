@@ -4,6 +4,7 @@ test/
 test_char/
 train_char/
 train/
+tmp/
 __pycache__/
 checkpoint*
 *.json
