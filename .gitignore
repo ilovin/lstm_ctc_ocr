@@ -1,9 +1,6 @@
-train1/
 log/
-test/
-test_char/
-train_char/
-train/
+test*/
+train*/
 tmp/
 __pycache__/
 checkpoint*
