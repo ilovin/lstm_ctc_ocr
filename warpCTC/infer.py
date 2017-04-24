@@ -1,8 +1,8 @@
 import cv2,time,os
 import tensorflow as tf
 import numpy as np
-import utils_read_all_data_one_time as utils
-import lstm_ocr_read_one_time as model_define
+import utils
+import lstm_warpCTC as model_define
 
 FLAGS = utils.FLAGS
 

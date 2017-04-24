@@ -5,13 +5,13 @@
 
 Notice that,  
 - standard : use `tf.nn.ctc_loss` to calculate the ctc loss
-- warpCTC : please install the [warpCTC tensorflow_binding](https://github.com/baidu-research/warp-ctc/tree/master/tensorflow_bindi ng) first
+- warpCTC : please install the [warpCTC tensorflow_binding](https://github.com/baidu-research/warp-ctc/tree/master/tensorflow_binding) first
 
 ### Dependency
 - python 3  
 - tensorflow 1.0.1  
 - [captcha](https://pypi.python.org/pypi/captcha)
-- (optional) [warpCTC tensorflow_binding](https://github.com/baidu-research/warp-ctc/tree/master/tensorflow_bindi ng)
+- (optional) [warpCTC tensorflow_binding](https://github.com/baidu-research/warp-ctc/tree/master/tensorflow_binding)
 
 ### Some details
 
@@ -22,6 +22,7 @@ Notice that, Some tools and parameters can be found in `utils_*.py`
 if you want use your training data, the height of the image shall be the same, and the suffix of the image shall be `png` or you can modify the code in `utils_*.py` from`tf.image.decode_png` to anything you need  
 
 ### Result
-The accurary is more than 95%  
+After adding more training data
+The accurary can be more than 95%  
 ![accuracy](http://omy9d4djr.bkt.clouddn.com/markdown-img-paste-20170409223605283.png)  
 Read [this blog](https://ilovin.github.io/2017-04-06/tensorflow-lstm-ctc-ocr/) for more detail
