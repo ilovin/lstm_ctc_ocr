@@ -19,7 +19,12 @@ The training data:
 ![data](https://ooo.0o0.ooo/2017/04/13/58ef08ab6af03.png)  
 
 Notice that, Some tools and parameters can be found in `utils_*.py`  
-if you want use your training data, the height of the image shall be the same, and the suffix of the image shall be `png` or you can modify the code in `utils_*.py` from`tf.image.decode_png` to anything you need  
+if you want use your training data, the height of the image shall be the same, and the suffix of the image shall be `png` or you can modify the code in `utils_*.py` from`tf.image.decode_png` to anything you need.
+some parameters need to be fined tune:
+- learning rate
+- decay step & decay rate, notice that, remember to uncomment the learing rate decay part of code
+- image_width
+- image_height
 
 ### Result
 After adding more training data
