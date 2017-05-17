@@ -18,16 +18,20 @@ Notice that,
 The training data:  
 ![data](https://ooo.0o0.ooo/2017/04/13/58ef08ab6af03.png)  
 
-Notice that, Some tools and parameters can be found in `utils_*.py`  
-if you want use your training data, the height of the image shall be the same, and the suffix of the image shall be `png` or you can modify the code in `utils_*.py` from`tf.image.decode_png` to anything you need.
+Notice that, **sufficient amount of data is a must**, otherwise, the network cannot converge.  
+Some tools and parameters can be found in `utils_*.py`  
 some parameters need to be fined tune:
 - learning rate
-- decay step & decay rate, notice that, remember to uncomment the learing rate decay part of code
+- decay step & decay rate (notice that, uncomment the learing rate decay part of code if it is commented)
 - image_width
 - image_height
+
+if you want to use your own data and use pipline to read data, the height of the image shall be the same, besides, the suffix of the image shall be `png` or you can modify the code in `utils_*.py` from`tf.image.decode_png` to anything you need. However, if you read all your images at one time using OpenCV(default in my code), then this is not a problem.
+
 
 ### Result
 After adding more training data
 The accurary can be more than 95%  
 ![accuracy](http://omy9d4djr.bkt.clouddn.com/markdown-img-paste-20170409223605283.png)  
-Read [this blog](https://ilovin.github.io/2017-04-06/tensorflow-lstm-ctc-ocr/) for more detail
+Read [this blog](https://ilovin.github.io/2017-04-06/tensorflow-lstm-ctc-ocr/) for more details and [this blog](http://ilovin.github.io/2017-04-23/tensorflow-lstm-ctc-input-output/) for how to
+use `tf.nn.ctc_loss` or `warpCTC`

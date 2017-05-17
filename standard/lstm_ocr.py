@@ -84,21 +84,23 @@ class Graph(object):
             self.loss = tf.nn.ctc_loss(labels=self.labels,inputs=logits, sequence_length=self.seq_len)
             self.cost = tf.reduce_mean(self.loss)
         
-            #learning_rate=tf.train.exponential_decay(FLAGS.initial_learning_rate,
-            #        global_step, 
-            #        FLAGS.decay_steps,
-            #        FLAGS.decay_rate,staircase=True)
+            self.learning_rate=tf.train.exponential_decay(FLAGS.initial_learning_rate,
+                    self.global_step, 
+                    FLAGS.decay_steps,
+                    FLAGS.decay_rate,staircase=True)
            
+            self.optimizer = tf.train.RMSPropOptimizer(learning_rate=self.learning_rate,
+                    momentum=FLAGS.momentum).minimize(self.cost,global_step=self.global_step)
             #optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate,
             #        momentum=FLAGS.momentum,use_nesterov=True).minimize(cost,global_step=global_step)
-            self.optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS.initial_learning_rate,
-                    beta1=FLAGS.beta1,beta2=FLAGS.beta2).minimize(self.loss,global_step=self.global_step)
+            #self.optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS.initial_learning_rate,
+            #       beta1=FLAGS.beta1,beta2=FLAGS.beta2).minimize(self.loss,global_step=self.global_step)
            
             # Option 2: tf.contrib.ctc.ctc_beam_search_decoder
             # (it's slower but you'll get better results)
             #decoded, log_prob = tf.nn.ctc_greedy_decoder(logits, seq_len,merge_repeated=False)
             self.decoded, self.log_prob = tf.nn.ctc_beam_search_decoder(logits, self.seq_len,merge_repeated=False)
-           
+            self.dense_decoded = tf.sparse_tensor_to_dense(self.decoded[0], default_value=-1)
             # Inaccuracy: label error rate
             self.lerr = tf.reduce_mean(tf.edit_distance(tf.cast(self.decoded[0], tf.int32), self.labels))
         
@@ -106,24 +108,25 @@ class Graph(object):
             tf.summary.scalar('lerr',self.lerr)
             self.merged_summay = tf.summary.merge_all()
 
-def train():
+def train(train_dir=None,val_dir=None):
     g = Graph()
-    with g.graph.as_default():
-        print('loading train data, please wait---------------------',end=' ')
-        train_feeder=utils.DataIterator(data_dir='../train/')
-        print('get image: ',train_feeder.size)
+    #with g.graph.as_default():
+    print('loading train data, please wait---------------------',end=' ')
+    train_feeder=utils.DataIterator(data_dir=train_dir)
+    print('get image: ',train_feeder.size)
 
-        print('loading validation data, please wait---------------------',end=' ')
-        val_feeder=utils.DataIterator(data_dir='../test/')
-        print('get image: ',val_feeder.size)
+    print('loading validation data, please wait---------------------',end=' ')
+    val_feeder=utils.DataIterator(data_dir=val_dir)
+    print('get image: ',val_feeder.size)
 
-    num_train_samples = train_feeder.size # 12800
-    num_batches_per_epoch = int(num_train_samples/FLAGS.batch_size) # example: 12800/64
+    num_train_samples = train_feeder.size # 128000
+    num_batches_per_epoch = int(num_train_samples/FLAGS.batch_size) # example: 128000/64
 
     config=tf.ConfigProto(log_device_placement=False,allow_soft_placement=False)
     with tf.Session(graph=g.graph,config=config) as sess:
         sess.run(tf.global_variables_initializer())
         saver = tf.train.Saver(tf.global_variables(),max_to_keep=100)
+        g.graph.finalize()
         train_writer=tf.summary.FileWriter(FLAGS.log_dir+'/train',sess.graph)
         if FLAGS.restore:
             ckpt = tf.train.latest_checkpoint(FLAGS.checkpoint_dir)
@@ -143,7 +146,7 @@ def train():
         for cur_epoch in range(FLAGS.num_epochs):
             shuffle_idx=np.random.permutation(num_train_samples)
             train_cost = train_err=0
-            start = time.time()
+            start_time = time.time()
             batch_time = time.time()
             #the tracing part
             for cur_batch in range(num_batches_per_epoch):
@@ -152,6 +155,7 @@ def train():
                 batch_time = time.time()
                 indexs = [shuffle_idx[i%num_train_samples] for i in range(cur_batch*FLAGS.batch_size,(cur_batch+1)*FLAGS.batch_size)]
                 batch_inputs,batch_seq_len,batch_labels=train_feeder.input_index_generate_batch(indexs)
+                #batch_inputs,batch_seq_len,batch_labels=utils.gen_batch(FLAGS.batch_size)
                 feed={g.inputs: batch_inputs,
                         g.labels:batch_labels,
                         g.seq_len:batch_seq_len}
@@ -182,18 +186,19 @@ def train():
                     logger.info('save the checkpoint of{0}',format(step))
                     saver.save(sess,os.path.join(FLAGS.checkpoint_dir,'ocr-model'),global_step=step)
                 #train_err+=the_err*FLAGS.batch_size
-            d,lastbatch_err = sess.run([g.decoded[0],g.lerr],val_feed)
-            dense_decoded = tf.sparse_tensor_to_dense(d, default_value=-1).eval(session=sess)
-            # print the decode result
-            acc = utils.accuracy_calculation(val_feeder.labels,dense_decoded,ignore_value=-1,isPrint=True)
-            train_cost/=num_train_samples
-            #train_err/=num_train_samples
-            now = datetime.datetime.now()
-            log = "{}-{} {}:{}:{} Epoch {}/{}, accuracy = {:.3f},train_cost = {:.3f}, lastbatch_err = {:.3f}, time = {:.3f}"
-            print(log.format(now.month,now.day,now.hour,now.minute,now.second,
-                cur_epoch+1,FLAGS.num_epochs,acc,train_cost,lastbatch_err,time.time()-start))
-        
+                #do validation
+                if step%FLAGS.validation_steps == 0:
+                    dense_decoded,lastbatch_err,lr = sess.run([g.dense_decoded,g.lerr,
+                        g.learning_rate],val_feed)
+                    # print the decode result
+                    acc = utils.accuracy_calculation(val_feeder.labels,dense_decoded,ignore_value=-1,isPrint=True)
+                    avg_train_cost=train_cost/((cur_batch+1)*FLAGS.batch_size)
+                    #train_err/=num_train_samples
+                    now = datetime.datetime.now()
+                    log = "{}/{} {}:{}:{} Epoch {}/{}, accuracy = {:.3f},avg_train_cost = {:.3f}, lastbatch_err = {:.3f}, time = {:.3f},lr={:.8f}"
+                    print(log.format(now.month,now.day,now.hour,now.minute,now.second, 
+                        cur_epoch+1,FLAGS.num_epochs,acc,avg_train_cost,lastbatch_err,time.time()-start_time,lr)) 
 
 if __name__ == '__main__':
-    train()
+    train(train_dir='../train',val_dir='../test')
 

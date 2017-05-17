@@ -1,8 +1,8 @@
-import cv2,time,os
+import cv2,time,os,re
 import tensorflow as tf
 import numpy as np
 import utils
-import lstm_warpCTC as model_define
+import lstm_ocr as model_define
 
 FLAGS = utils.FLAGS
 
@@ -10,8 +10,9 @@ inferFolder = 'tmp'
 imgList = []
 for root,subFolder,fileList in os.walk(inferFolder):
     for fName in fileList:
-        img_Path = os.path.join(root,fName)
-        imgList.append(img_Path)
+        if re.match(r'.*\.[jpg|png|jpeg]',fName.lower()):
+            img_Path = os.path.join(root,fName)
+            imgList.append(img_Path)
 
 
 def main():
@@ -25,10 +26,17 @@ def main():
             print('restore from ckpt{}'.format(ckpt))
         else:
             print('cannot restore')
-
         
         imgStack = []
+        right = total  = 0
         for img in imgList:
+            pattern = r'.*_(.*)\..*'
+            try:
+                org = re.match(pattern,img).group(1)
+            except:
+                print('>>>>>>>>the img name does not match the pattern: ',img)
+                continue
+            total+=1
             im = cv2.imread(img,0).astype(np.float32)/255.
             im = cv2.resize(im,(utils.image_width,utils.image_height))
             im = im.swapaxes(0,1)
@@ -50,8 +58,10 @@ def main():
                         res+=' '
                     else:
                         res+=utils.decode_maps[i]
-            print('cost time: ',time.time()-start,end=' ')
-            print('ORG: ',img,' decoded: ',res)
+            print('cost time: ',time.time()-start)
+            if res == org.upper(): right+=1
+            else: print('ORG: ',img,' decoded: ',res)
+        print('total accuracy: ',right*1.0/total)
 
 
 if __name__ == '__main__':
