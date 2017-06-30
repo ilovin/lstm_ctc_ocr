@@ -30,8 +30,12 @@ if you want to use your own data and use pipline to read data, the height of the
 
 
 ### Result
+update:
+recently, I reproduce some images, and I find I cannot reproduce the result.  
+
+---
 After adding more training data
-The accurary can be more than 95%  
-![accuracy](http://omy9d4djr.bkt.clouddn.com/markdown-img-paste-20170409223605283.png)  
+The accurary can be<del> more than 95%  
+![accuracy](http://omy9d4djr.bkt.clouddn.com/markdown-img-paste-20170409223605283.png)  </del>
 Read [this blog](https://ilovin.github.io/2017-04-06/tensorflow-lstm-ctc-ocr/) for more details and [this blog](http://ilovin.github.io/2017-04-23/tensorflow-lstm-ctc-input-output/) for how to
 use `tf.nn.ctc_loss` or `warpCTC`
