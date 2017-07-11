@@ -10,7 +10,8 @@ from tensorflow.python.client import timeline
 import warpctc_tensorflow
 import utils
 
-os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID" 
+# os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+os.environ["CUDA_DEVICE_ORDER"]="1"
 
 FLAGS=utils.FLAGS
 #26*2 + 10 digit + blank + space
@@ -88,11 +89,13 @@ class Graph(object):
 
             self.cost = tf.reduce_mean(self.loss)
         
-            #learning_rate=tf.train.exponential_decay(FLAGS.initial_learning_rate,
-            #        global_step, 
-            #        FLAGS.decay_steps,
-            #        FLAGS.decay_rate,staircase=True)
-           
+            self.learning_rate=tf.train.exponential_decay(FLAGS.initial_learning_rate,
+                   self.global_step,
+                   FLAGS.decay_steps,
+                   FLAGS.decay_rate,staircase=True)
+
+            # self.optimizer = tf.train.RMSPropOptimizer(learning_rate=self.learning_rate,
+            #         momentum=FLAGS.momentum).minimize(self.cost,global_step=self.global_step)
             #optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate,
             #        momentum=FLAGS.momentum,use_nesterov=True).minimize(cost,global_step=global_step)
             self.optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS.initial_learning_rate,
@@ -111,15 +114,15 @@ class Graph(object):
             #tf.summary.scalar('lerr',self.lerr)
             self.merged_summay = tf.summary.merge_all()
 
-def train():
+def train(train_dir = None,val_dir = None):
     g = Graph()
     with g.graph.as_default():
         print('loading train data, please wait---------------------',end=' ')
-        train_feeder=utils.DataIterator(data_dir='../train_long/')
+        train_feeder=utils.DataIterator(data_dir=train_dir)
         print('get image: ',train_feeder.size)
 
         print('loading validation data, please wait---------------------',end=' ')
-        val_feeder=utils.DataIterator(data_dir='../test_long/')
+        val_feeder=utils.DataIterator(data_dir=val_dir)
         print('get image: ',val_feeder.size)
 
     num_train_samples = train_feeder.size # 12800
@@ -163,10 +166,9 @@ def train():
                       g.labels: batch_labels,
                      g.seq_len: batch_seq_len,
                    g.label_len: batch_lab_len}
-                #the_err,d,lr = sess.run([lerr,decoded[0],learning_rate])
                 # if summary is needed
                 #batch_cost,step,train_summary,_ = sess.run([cost,global_step,merged_summay,optimizer],feed)
-                batch_cost,step,_ = sess.run([g.cost,g.global_step,g.optimizer],feed)
+                summary_str,batch_cost,lr,step,_ = sess.run([g.merged_summay,g.cost,g.learning_rate,g.global_step,g.optimizer],feed)
                 #calculate the cost
                 train_cost+=batch_cost*FLAGS.batch_size
                 ## the tracing part
@@ -177,8 +179,7 @@ def train():
                 #trace = timeline.Timeline(step_stats=run_metadata.step_stats)
                 #race_file.write(trace.generate_chrome_trace_format())
                 #trace_file.close()
-
-                #train_writer.add_summary(train_summary,step)
+                train_writer.add_summary(summary_str,step)
 
                 # save the checkpoint
                 if step%FLAGS.save_steps == 1:
@@ -198,11 +199,11 @@ def train():
                     #train_cost/=num_train_samples
                     #train_err/=num_train_samples
                     now = datetime.datetime.now()
-                    log = "{}-{} {}:{}:{} Epoch {}/{}, accuracy = {:.3f},train_cost = {:.3f}, time = {:.3f}"
+                    log = "{}-{} {}:{}:{} Epoch {}/{}, accuracy = {:.3f},train_cost = {:.3f}, time = {:.3f}, lr = {:.8f}"
                     print(log.format(now.month,now.day,now.hour,now.minute,now.second,
-                        cur_epoch+1,FLAGS.num_epochs,acc,avg_train_cost,time.time()-start))
+                        cur_epoch+1,FLAGS.num_epochs,acc,avg_train_cost,time.time()-start,lr))
         
 
 if __name__ == '__main__':
-    train()
+    train(train_dir='../train',val_dir='../val')
 

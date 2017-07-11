@@ -10,7 +10,7 @@ def randRGB():
 #10+26+26
 char_set='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 imgDir = None
-numProcess = 20
+numProcess = 12 
 def gen_rand():
     buf = ""
     max_len = random.randint(4,6)
@@ -36,5 +36,5 @@ def run(num,path):
          pool.map(generateImg,range(num))
 
 if __name__=='__main__':
-    run(64*2000,'train_long')
-    #run(500,'test')
+    run(64*2000,'train')
+    run(500,'val')

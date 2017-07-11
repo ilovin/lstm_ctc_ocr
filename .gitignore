@@ -1,4 +1,5 @@
 log/
+val*/
 test*/
 train*/
 tmp/
@@ -7,3 +8,4 @@ checkpoint*
 *.json
 *.swp
 *.swo
+.idea/

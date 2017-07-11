@@ -10,29 +10,30 @@ from tensorflow.python.client import device_lib
 num_classes=26+26+10+1+1
 #num_train_samples = 128000
 
-num_features=60
-image_width=160
-image_height=60
+channel = 1
+image_width=80
+image_height=30
+num_features=image_height*channel
 SPACE_INDEX=0
 SPACE_TOKEN=''
 
 maxPrintLen = 10
-tf.app.flags.DEFINE_boolean('restore', True, 'whether to restore from the latest checkpoint')
-tf.app.flags.DEFINE_string('checkpoint_dir', './checkpoint_read_one_time/', 'the checkpoint dir')
-tf.app.flags.DEFINE_float('initial_learning_rate', 5e-5, 'inital lr')
+tf.app.flags.DEFINE_boolean('restore', False, 'whether to restore from the latest checkpoint')
+tf.app.flags.DEFINE_string('checkpoint_dir', './checkpoint/', 'the checkpoint dir')
+tf.app.flags.DEFINE_float('initial_learning_rate', 1e-4, 'inital lr')
 
 tf.app.flags.DEFINE_integer('num_layers', 2, 'number of layer')
 tf.app.flags.DEFINE_integer('num_hidden', 128, 'number of hidden')
 tf.app.flags.DEFINE_integer('num_epochs', 10000, 'maximum epochs')
 tf.app.flags.DEFINE_integer('batch_size', 64, 'the batch_size')
 tf.app.flags.DEFINE_integer('save_steps', 1000, 'the step to save checkpoint')
+tf.app.flags.DEFINE_integer('validation_steps', 500, 'the step to validation')
 
-
-tf.app.flags.DEFINE_float('decay_rate', 0.8, 'the lr decay rate')
+tf.app.flags.DEFINE_float('decay_rate', 1, 'the lr decay rate')
 tf.app.flags.DEFINE_float('beta1', 0.9, 'parameter of adam optimizer beta1')
 tf.app.flags.DEFINE_float('beta2', 0.999, 'adam parameter beta2')
 
-tf.app.flags.DEFINE_integer('decay_steps', 3000, 'the lr decay_step for momentum optimizer')
+tf.app.flags.DEFINE_integer('decay_steps', 10000, 'the lr decay_step for optimizer')
 tf.app.flags.DEFINE_float('momentum', 0.9, 'the momentum')
 
 tf.app.flags.DEFINE_string('log_dir', './log', 'the logging dir')

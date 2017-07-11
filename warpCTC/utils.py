@@ -7,42 +7,38 @@ import cv2,time
 from tensorflow.python.client import device_lib
 
 #26*2 + 10 digit + blank + space
-num_classes=26+26+10+1+1
+charset = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+num_classes=len(charset)+1+1
 #num_train_samples = 128000
-
 nchannels = 1
-image_width=700
-image_height=60
+image_width=120
+image_height=45
 num_features=image_height*nchannels
 SPACE_INDEX=0
 SPACE_TOKEN=''
 
 maxPrintLen = 10
 tf.app.flags.DEFINE_boolean('restore', True, 'whether to restore from the latest checkpoint')
-tf.app.flags.DEFINE_string('checkpoint_dir', './checkpoint_long/', 'the checkpoint dir')
-tf.app.flags.DEFINE_float('initial_learning_rate', 1e-3, 'inital lr')
+tf.app.flags.DEFINE_string('checkpoint_dir', './checkpoint/', 'the checkpoint dir')
+tf.app.flags.DEFINE_float('initial_learning_rate', 1e-6, 'inital lr')
 
 tf.app.flags.DEFINE_integer('num_layers', 2, 'number of layer')
-tf.app.flags.DEFINE_integer('num_hidden', 256, 'number of hidden')
+tf.app.flags.DEFINE_integer('num_hidden', 128, 'number of hidden')
 tf.app.flags.DEFINE_integer('num_epochs', 10000, 'maximum epochs')
 tf.app.flags.DEFINE_integer('batch_size', 64, 'the batch_size')
 tf.app.flags.DEFINE_integer('save_steps', 1000, 'the step to save checkpoint')
-tf.app.flags.DEFINE_integer('validation_steps', 1000, 'the step to validation')
+tf.app.flags.DEFINE_integer('validation_steps', 500, 'the step to validation')
 
+tf.app.flags.DEFINE_float('decay_rate', 1, 'the lr decay rate')
+tf.app.flags.DEFINE_integer('decay_steps', 1000, 'the lr decay_step for momentum optimizer')
 
-tf.app.flags.DEFINE_float('decay_rate', 0.8, 'the lr decay rate')
 tf.app.flags.DEFINE_float('beta1', 0.9, 'parameter of adam optimizer beta1')
 tf.app.flags.DEFINE_float('beta2', 0.999, 'adam parameter beta2')
-
-tf.app.flags.DEFINE_integer('decay_steps', 1000, 'the lr decay_step for momentum optimizer')
 tf.app.flags.DEFINE_float('momentum', 0.9, 'the momentum')
 
 tf.app.flags.DEFINE_string('log_dir', './log', 'the logging dir')
 FLAGS=tf.app.flags.FLAGS
 
-#num_batches_per_epoch = int(num_train_samples/FLAGS.batch_size)
-
-charset = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 encode_maps={}
 decode_maps={}
 for i,char in enumerate(charset,1):

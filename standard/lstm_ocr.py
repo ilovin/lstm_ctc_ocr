@@ -89,10 +89,10 @@ class Graph(object):
                     FLAGS.decay_steps,
                     FLAGS.decay_rate,staircase=True)
            
-            self.optimizer = tf.train.RMSPropOptimizer(learning_rate=self.learning_rate,
-                    momentum=FLAGS.momentum).minimize(self.cost,global_step=self.global_step)
-            #optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate,
-            #        momentum=FLAGS.momentum,use_nesterov=True).minimize(cost,global_step=global_step)
+            #self.optimizer = tf.train.RMSPropOptimizer(learning_rate=self.learning_rate,
+            #        momentum=FLAGS.momentum).minimize(self.cost,global_step=self.global_step)
+            self.optimizer = tf.train.MomentumOptimizer(learning_rate=self.learning_rate,
+                    momentum=FLAGS.momentum,use_nesterov=True).minimize(self.cost,global_step=self.global_step)
             #self.optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS.initial_learning_rate,
             #       beta1=FLAGS.beta1,beta2=FLAGS.beta2).minimize(self.loss,global_step=self.global_step)
            
@@ -105,7 +105,7 @@ class Graph(object):
             self.lerr = tf.reduce_mean(tf.edit_distance(tf.cast(self.decoded[0], tf.int32), self.labels))
         
             tf.summary.scalar('cost',self.cost)
-            tf.summary.scalar('lerr',self.lerr)
+            # tf.summary.scalar('lerr',self.lerr)
             self.merged_summay = tf.summary.merge_all()
 
 def train(train_dir=None,val_dir=None):
@@ -165,7 +165,7 @@ def train(train_dir=None,val_dir=None):
 
                 # if summary is needed
                 #batch_cost,step,train_summary,_ = sess.run([cost,global_step,merged_summay,optimizer],feed)
-                batch_cost,step,_ = sess.run([g.cost,g.global_step,g.optimizer],feed)
+                summary_str, batch_cost,step,_ = sess.run([g.merged_summay,g.cost,g.global_step,g.optimizer],feed)
                 #calculate the cost
                 train_cost+=batch_cost*FLAGS.batch_size
                 ## the tracing part
@@ -177,7 +177,7 @@ def train(train_dir=None,val_dir=None):
                 #race_file.write(trace.generate_chrome_trace_format())
                 #trace_file.close()
 
-                #train_writer.add_summary(train_summary,step)
+                train_writer.add_summary(summary_str,step)
 
                 # save the checkpoint
                 if step%FLAGS.save_steps == 1:
@@ -200,5 +200,5 @@ def train(train_dir=None,val_dir=None):
                         cur_epoch+1,FLAGS.num_epochs,acc,avg_train_cost,lastbatch_err,time.time()-start_time,lr)) 
 
 if __name__ == '__main__':
-    train(train_dir='../train',val_dir='../test')
+    train(train_dir='../train',val_dir='../val')
 

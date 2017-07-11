@@ -19,6 +19,7 @@ The training data:
 ![data](https://ooo.0o0.ooo/2017/04/13/58ef08ab6af03.png)  
 
 Notice that, **sufficient amount of data is a must**, otherwise, the network cannot converge.  
+optimizer can be found in `lstm_ocr.py`
 Some tools and parameters can be found in `utils_*.py`  
 some parameters need to be fined tune:
 - learning rate
@@ -31,7 +32,7 @@ if you want to use your own data and use pipline to read data, the height of the
 
 ### Result
 update:
-recently, I reproduce some images, and I find I cannot reproduce the result.  
+Notice that, different optimizer may lead to different resuilt.
 
 ---
 After adding more training data
