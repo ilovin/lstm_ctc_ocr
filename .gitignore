@@ -1,0 +1,14 @@
+log/
+val*/
+test*/
+train*/
+logs/
+output/
+data/
+tmp/
+__pycache__/
+checkpoint*
+*.json
+*.swp
+*.swo
+.idea/
