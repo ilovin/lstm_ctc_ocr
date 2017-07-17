@@ -84,7 +84,7 @@ class SolverWrapper(object):
             opt = tf.train.MomentumOptimizer(lr, momentum)
 
         global_step = tf.Variable(0, trainable=False)
-        with_clip = False
+        with_clip = True
         if with_clip:
             tvars = tf.trainable_variables()
             grads, norm = tf.clip_by_global_norm(tf.gradients(loss, tvars), 10.0)
@@ -116,6 +116,7 @@ class SolverWrapper(object):
         timer = Timer()
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
+        loss_min = 0.04
         try:
             while not coord.should_stop():
                 for iter in range(restore_iter, max_iters):
@@ -133,7 +134,8 @@ class SolverWrapper(object):
                         self.net.data:          img_Batch,
                         self.net.labels:        label_Batch,
                         self.net.time_step_len: np.array(time_step_Batch),
-                        self.net.labels_len:    np.array(label_len_Batch)
+                        self.net.labels_len:    np.array(label_len_Batch),
+                        self.net.keep_prob:     0.5
                     }
 
                     fetch_list = [loss,summary_op,train_op]
@@ -146,9 +148,10 @@ class SolverWrapper(object):
                         print('iter: %d / %d, total loss: %.7f, lr: %.7f'%\
                                 (iter, max_iters, ctc_loss ,lr.eval()),end=' ')
                         print('speed: {:.3f}s / iter'.format(_diff_time))
-                    if (iter+1) % cfg.TRAIN.SNAPSHOT_ITERS == 0:
-                        self.snapshot(sess, iter)
-                    if (iter+1) % cfg.VAL.VAL_STEP == 0:
+                    if (iter+1) % cfg.TRAIN.SNAPSHOT_ITERS == 0 or ctc_loss<loss_min:
+                        self.snapshot(sess, 0)
+                        loss_min = ctc_loss
+                    if (iter+1) % cfg.VAL.VAL_STEP == 0 or loss_min==ctc_loss:
                         val_img_Batch,val_labels_Batch, val_label_len_Batch,val_time_step_Batch = \
                             sess.run([val_img_b,val_lb_b,val_lb_len_b,val_t_s_b])
                         val_label_Batch = self.mergeLabel(val_labels_Batch,ignore = 0)
@@ -157,7 +160,8 @@ class SolverWrapper(object):
                             self.net.data :          val_img_Batch,
                             self.net.labels :         val_label_Batch,
                             self.net.time_step_len : np.array(val_time_step_Batch),
-                            self.net.labels_len :     np.array(val_label_len_Batch)
+                            self.net.labels_len :     np.array(val_label_len_Batch),
+                            self.net.keep_prob:      1.0
                         }
 
                         # fetch_list = [dense_decoded]

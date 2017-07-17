@@ -95,8 +95,40 @@ class Network(object):
         assert padding in ('SAME', 'VALID')
 
     @layer
-    def lstm(self, input, num_hids, num_layers, name,trainable=True):
+    def bi_lstm(self, input, num_hids, num_layers, name,img_shape = None ,trainable=True):
         img,img_len = input[0],input[1]
+        if img_shape:img =tf.reshape(img,shape = [-1]+img_shape[1:] )
+        with tf.variable_scope(name) as scope:
+            #stack = tf.contrib.rnn.MultiRNNCell([cell,cell1] , state_is_tuple=True)
+            lstm_fw_cell = tf.contrib.rnn.LSTMCell(num_hids/2,state_is_tuple=True)
+            lstm_bw_cell = tf.contrib.rnn.LSTMCell(num_hids/2,state_is_tuple=True)
+
+            output,_ = tf.nn.bidirectional_dynamic_rnn(lstm_fw_cell,lstm_bw_cell,img,img_len,dtype=tf.float32)
+            output_bw_reverse = tf.reverse_sequence(output[1],img_len,seq_axis=1)
+            output = tf.concat([output[0],output_bw_reverse],axis=2)
+
+            stack_cell = tf.contrib.rnn.MultiRNNCell(
+                [tf.contrib.rnn.LSTMCell(num_hids, state_is_tuple=True) for _ in range(num_layers)],
+                state_is_tuple=True)
+            lstm_out,last_state = tf.nn.dynamic_rnn(stack_cell,output,img_len,dtype=tf.float32)
+            shape = tf.shape(img)
+            batch_size, time_step = shape[0],shape[1]
+            lstm_out = tf.reshape(lstm_out,[-1,num_hids])
+            # init_weights = tf.contrib.layers.variance_scaling_initializer(factor=0.001, mode='FAN_AVG', uniform=False)
+            init_weights = tf.contrib.layers.xavier_initializer()
+            # init_weights = tf.truncated_normal_initializer(stddev=0.1)
+            init_biases = tf.constant_initializer(0.0)
+            W = self.make_var('weights', [num_hids, cfg.NCLASSES], init_weights, trainable, \
+                              regularizer=self.l2_regularizer(cfg.TRAIN.WEIGHT_DECAY))
+            b = self.make_var('biases', [cfg.NCLASSES], init_biases, trainable)
+            logits = tf.matmul(lstm_out,W)+b
+            logits = tf.reshape(logits,[batch_size,-1,cfg.NCLASSES])
+            logits = tf.transpose(logits,(1,0,2))
+            return logits
+    @layer
+    def lstm(self, input, num_hids, num_layers, name,img_shape = None ,trainable=True):
+        img,img_len = input[0],input[1]
+        if img_shape:img =tf.reshape(img,shape = img_shape )
         with tf.variable_scope(name) as scope:
             stack_cell = tf.contrib.rnn.MultiRNNCell(
                 [tf.contrib.rnn.LSTMCell(num_hids, state_is_tuple=True) for _ in range(num_layers)],
@@ -124,10 +156,36 @@ class Network(object):
         return concat
 
     @layer
-    def conv(self, input, k_h, k_w, c_o, s_h, s_w, name, biased=True,relu=True, padding=DEFAULT_PADDING, trainable=True):
+    def conv_single(self, input, k_h, k_w, c_o, s_h, s_w, name, c_i=None, biased=True,relu=True, padding=DEFAULT_PADDING, trainable=True):
         """ contribution by miraclebiu, and biased option"""
         self.validate_padding(padding)
-        c_i = input.get_shape()[-1]
+        if not c_i: c_i = input.get_shape()[-1]
+        if c_i==1: input = tf.expand_dims(input=input,axis=3)
+        convolve = lambda i, k: tf.nn.conv2d(i, k, [1,s_h, s_w, 1], padding=padding)
+        with tf.variable_scope(name) as scope:
+            init_weights = tf.contrib.layers.xavier_initializer()
+            init_biases = tf.constant_initializer(0.0)
+            kernel = self.make_var('weights', [k_h, k_w, c_i, c_o], init_weights, trainable, \
+                                   regularizer=self.l2_regularizer(cfg.TRAIN.WEIGHT_DECAY))
+            if biased:
+                biases = self.make_var('biases', [c_o], init_biases, trainable)
+                conv = convolve(input, kernel)
+                if relu:
+                    bias = tf.nn.bias_add(conv, biases)
+
+                    return tf.nn.relu(bias)
+                return tf.nn.bias_add(conv, biases)
+            else:
+                conv = convolve(input, kernel)
+                if relu:
+                    return tf.nn.relu(conv)
+                return conv
+
+    @layer
+    def conv(self, input, k_h, k_w, c_o, s_h, s_w, name, c_i=None, biased=True,relu=True, padding=DEFAULT_PADDING, trainable=True):
+        """ contribution by miraclebiu, and biased option"""
+        self.validate_padding(padding)
+        if not c_i: c_i = input.get_shape()[-1]
         convolve = lambda i, k: tf.nn.conv2d(i, k, [1, s_h, s_w, 1], padding=padding)
         with tf.variable_scope(name) as scope:
             init_weights = tf.contrib.layers.xavier_initializer()
@@ -581,8 +639,8 @@ class Network(object):
         dense_decoded = tf.cast(tf.sparse_tensor_to_dense(decoded[0], default_value=0), tf.int32)
 
         # add regularizer
-        # if cfg.TRAIN.WEIGHT_DECAY > 0:
-        #     regularization_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
-        #     loss = tf.add_n(regularization_losses) + loss
+        if cfg.TRAIN.WEIGHT_DECAY > 0:
+            regularization_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+            loss = tf.add_n(regularization_losses) + loss
 
         return loss,dense_decoded

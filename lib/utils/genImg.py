@@ -36,5 +36,5 @@ def run(num,path):
          pool.map(generateImg,range(num))
 
 if __name__=='__main__':
-    run(64*2000,'train')
-    run(500,'val')
+    run(64*2000,'./data/train')
+    run(500,'./data/val')

@@ -12,12 +12,13 @@ cfg = __C
 # Default GPU device id
 __C.GPU_ID = 1
 # region proposal network (RPN) or not
-__C.IMG_SHAPE = [120,45]
+__C.IMG_SHAPE = [160,64]
 __C.MAX_CHAR_LEN = 6
 __C.CHARSET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 __C.NCLASSES = len(__C.CHARSET)+2
 __C.NCHANNELS = 1
 __C.NUM_FEATURES=__C.IMG_SHAPE[1]*__C.NCHANNELS
+__C.TIME_STEP = __C.IMG_SHAPE[0]//2
 
 __C.NET_NAME = 'lstm'
 __C.TRAIN = edict()

@@ -21,7 +21,7 @@ def parse_args():
                         default=0, type=int)
     parser.add_argument('--iters', dest='max_iters',
                         help='number of iterations to train',
-                        default=70000, type=int)
+                        default=700000, type=int)
     parser.add_argument('--cfg', dest='cfg_file',
                         help='optional config file',
                         default=None, type=str)
@@ -67,7 +67,7 @@ if __name__ == '__main__':
 
     # imgdb = edict({'path':'data/lstm_voc/pascal_augmented_train.tfrecords','name':'pascal_augmentted'})
     output_network_name=args.network_name.split('_')[-1]
-    imgdb = edict({'path':'./data/train.tfrecords','name':'lstm_'+output_network_name,
+    imgdb = edict({'path':'./data/train_4_6.tfrecords','name':'lstm_'+output_network_name,
                    'val_path':'./data/val.tfrecords' })
 
     output_dir = get_output_dir(imgdb, None)

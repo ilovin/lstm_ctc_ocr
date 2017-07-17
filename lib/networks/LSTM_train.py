@@ -7,7 +7,7 @@ class LSTM_train(Network):
     def __init__(self, trainable=True):
         self.inputs = []
 
-        self.data = tf.placeholder(tf.float32, shape=[None, None, cfg.NUM_FEATURES], name='data')
+        self.data = tf.placeholder(tf.float32, shape=[None, None, cfg.NUM_FEATURES ], name='data') #N*t_s*features*channels
         self.labels = tf.placeholder(tf.int32,[None],name='labels')
         self.time_step_len = tf.placeholder(tf.int32,[None], name='time_step_len')
         self.labels_len = tf.placeholder(tf.int32,[None],name='labels_len')
@@ -20,5 +20,11 @@ class LSTM_train(Network):
         self.setup()
 
     def setup(self):
-        (self.feed('data','time_step_len')
-         .lstm(cfg.TRAIN.NUM_HID,cfg.TRAIN.NUM_LAYERS,name='logits'))
+        (self.feed('data')
+         .conv_single(5, 5, 32 ,1, 1, name='conv1',c_i=cfg.NCHANNELS)
+         .conv_single(3, 3, 32 ,1, 1, name='conv2')
+         .max_pool(2, 2, 2, 2, padding='VALID', name='pool1')
+         .conv_single(3, 3, 1 ,1, 1, name='conv3',relu=False))
+        (self.feed('conv3','time_step_len')
+         .lstm(cfg.TRAIN.NUM_HID,cfg.TRAIN.NUM_LAYERS,name='logits',img_shape=[-1,cfg.IMG_SHAPE[0]//2,cfg.NUM_FEATURES//2]))
+         # .bi_lstm(cfg.TRAIN.NUM_HID,cfg.TRAIN.NUM_LAYERS,name='logits'))

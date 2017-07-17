@@ -185,17 +185,17 @@ def read_tfrecord_and_decode_into_image_annotation_pair_tensors(tfrecord_filenam
     label = tf.cast(sequence_features['label'],tf.int32)
     label = tf.reshape(label,[cfg.MAX_CHAR_LEN])
     #image_shape = tf.pack([height, width, 3])
-    image = tf.cast(image,tf.float32)/255.
     image_shape = tf.parallel_stack([height, width, 3])
     image = tf.reshape(image,image_shape)
 
     img_size = cfg.IMG_SHAPE #160,60
-    time_step = tf.constant(img_size[0],tf.int32)
+    time_step = tf.constant(cfg.TIME_STEP,tf.int32)
 
     if cfg.NCHANNELS==1: image = tf.image.rgb_to_grayscale(image)
     image = tf.image.resize_images(image,size=(img_size[1],img_size[0]),method=tf.image.ResizeMethod.BILINEAR)
     image = tf.transpose(image,perm=[1,0,2])
-    image = tf.reshape(image,[img_size[0],cfg.NUM_FEATURES])
+    image = tf.cast(tf.reshape(image,[img_size[0],cfg.NUM_FEATURES]),dtype=tf.float32)/255.
+
     # The last dimension was added because
     # the tf.resize_image_with_crop_or_pad() accepts tensors
     # that have depth. We need resize and crop later.
@@ -242,6 +242,6 @@ def read_test(tfrecords_fiename=None):
 
 
 if __name__=='__main__':
-    # wrtie_test(img_path='./data/train',tfrecords_filename='./data/train.tfrecords')
+    wrtie_test(img_path='/home/amax/Documents/code/lstm_train/lstm_ctc/data/train_4_6',tfrecords_filename='./data/train_4_6.tfrecords')
     # wrtie_test(img_path='./data/val',tfrecords_filename='./data/val.tfrecords')
-    read_test(tfrecords_fiename='./data/val.tfrecords')
+    # read_test(tfrecords_fiename='./data/val.tfrecords')
