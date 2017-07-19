@@ -39,6 +39,7 @@ Notice that, different optimizer may lead to different resuilt.
 ---
 After adding more training data
 The accurary is about 85%~92%  
+![acc](https://i.loli.net/2017/07/17/596c6de6584f7.png)
 
 Read [this blog](https://ilovin.github.io/2017-04-06/tensorflow-lstm-ctc-ocr/) for more details and [this blog](http://ilovin.github.io/2017-04-23/tensorflow-lstm-ctc-input-output/) for how to
 use `tf.nn.ctc_loss` or `warpCTC`

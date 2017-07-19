@@ -53,8 +53,10 @@ class SolverWrapper(object):
 
         timer = Timer()
 
+        total = correct = 0
         for file in os.listdir(testDir):
             timer.tic()
+            total+=1;
 
             if cfg.NCHANNELS == 1: img = cv2.imread(os.path.join(testDir,file),0)/255.
             else : img = cv2.imread(os.path.join(testDir,file),1)/255.
@@ -64,7 +66,7 @@ class SolverWrapper(object):
             img = np.reshape(img, [1,img_size[0],cfg.NUM_FEATURES])
             feed_dict = {
                 self.net.data: img,
-                self.net.time_step_len: [img_size[0]],
+                self.net.time_step_len: [cfg.TIME_STEP],
                 self.net.keep_prob: 1.0
             }
             res = sess.run(fetches=dense_decoded[0], feed_dict=feed_dict)
@@ -72,10 +74,13 @@ class SolverWrapper(object):
                 encode_maps,decode_maps = get_encode_decode_dict()
                 res = [decode_maps[i] for i in nums if i!=ignore]
                 return res
+            org = file.split('.')[0].split('_')[1]
             res = ''.join(decodeRes(res))
+            if org==res:correct+=1
             _diff_time = timer.toc(average=False)
             print('cost time: {:.3f},\n    res: {}'.format(_diff_time,res))
             #visualize_segmentation_adaptive(np.array(output),cls_dict)
+        print('total acc:{}/{}={:.4f}'.format(correct,total,correct/total))
 
 
 def test_net(network, imgdb, testDir, output_dir, log_dir, pretrained_model=None,restore=True):

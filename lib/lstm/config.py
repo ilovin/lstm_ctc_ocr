@@ -12,13 +12,14 @@ cfg = __C
 # Default GPU device id
 __C.GPU_ID = 1
 # region proposal network (RPN) or not
-__C.IMG_SHAPE = [160,64]
+__C.POOL_SCALE = 2
+__C.IMG_SHAPE = [180,60]
 __C.MAX_CHAR_LEN = 6
 __C.CHARSET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 __C.NCLASSES = len(__C.CHARSET)+2
 __C.NCHANNELS = 1
 __C.NUM_FEATURES=__C.IMG_SHAPE[1]*__C.NCHANNELS
-__C.TIME_STEP = __C.IMG_SHAPE[0]//2
+__C.TIME_STEP = __C.IMG_SHAPE[0]//__C.POOL_SCALE
 
 __C.NET_NAME = 'lstm'
 __C.TRAIN = edict()
@@ -36,9 +37,9 @@ __C.TRAIN.DISPLAY = 10
 __C.TRAIN.LOG_IMAGE_ITERS = 100
 __C.TRAIN.NUM_EPOCHS = 2000
 
-__C.TRAIN.NUM_HID = 64
+__C.TRAIN.NUM_HID = 128
 __C.TRAIN.NUM_LAYERS = 2
-__C.TRAIN.BATCH_SIZE = 64
+__C.TRAIN.BATCH_SIZE = 32
 
 # Iterations between snapshots
 __C.TRAIN.SNAPSHOT_ITERS = 5000

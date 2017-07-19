@@ -97,15 +97,15 @@ class Network(object):
     @layer
     def bi_lstm(self, input, num_hids, num_layers, name,img_shape = None ,trainable=True):
         img,img_len = input[0],input[1]
-        if img_shape:img =tf.reshape(img,shape = [-1]+img_shape[1:] )
+        if img_shape:img =tf.reshape(img,shape = img_shape )
         with tf.variable_scope(name) as scope:
             #stack = tf.contrib.rnn.MultiRNNCell([cell,cell1] , state_is_tuple=True)
             lstm_fw_cell = tf.contrib.rnn.LSTMCell(num_hids/2,state_is_tuple=True)
             lstm_bw_cell = tf.contrib.rnn.LSTMCell(num_hids/2,state_is_tuple=True)
 
             output,_ = tf.nn.bidirectional_dynamic_rnn(lstm_fw_cell,lstm_bw_cell,img,img_len,dtype=tf.float32)
-            output_bw_reverse = tf.reverse_sequence(output[1],img_len,seq_axis=1)
-            output = tf.concat([output[0],output_bw_reverse],axis=2)
+            # output_bw_reverse = tf.reverse_sequence(output[1],img_len,seq_axis=1)
+            output = tf.concat(output,axis=2)
 
             stack_cell = tf.contrib.rnn.MultiRNNCell(
                 [tf.contrib.rnn.LSTMCell(num_hids, state_is_tuple=True) for _ in range(num_layers)],
@@ -114,8 +114,8 @@ class Network(object):
             shape = tf.shape(img)
             batch_size, time_step = shape[0],shape[1]
             lstm_out = tf.reshape(lstm_out,[-1,num_hids])
-            # init_weights = tf.contrib.layers.variance_scaling_initializer(factor=0.001, mode='FAN_AVG', uniform=False)
-            init_weights = tf.contrib.layers.xavier_initializer()
+            init_weights = tf.contrib.layers.variance_scaling_initializer(factor=0.01, mode='FAN_AVG', uniform=False)
+            # init_weights = tf.contrib.layers.xavier_initializer()
             # init_weights = tf.truncated_normal_initializer(stddev=0.1)
             init_biases = tf.constant_initializer(0.0)
             W = self.make_var('weights', [num_hids, cfg.NCLASSES], init_weights, trainable, \

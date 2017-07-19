@@ -116,7 +116,7 @@ class SolverWrapper(object):
         timer = Timer()
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
-        loss_min = 0.04
+        loss_min = 0.02
         try:
             while not coord.should_stop():
                 for iter in range(restore_iter, max_iters):
@@ -149,8 +149,11 @@ class SolverWrapper(object):
                                 (iter, max_iters, ctc_loss ,lr.eval()),end=' ')
                         print('speed: {:.3f}s / iter'.format(_diff_time))
                     if (iter+1) % cfg.TRAIN.SNAPSHOT_ITERS == 0 or ctc_loss<loss_min:
-                        self.snapshot(sess, 0)
-                        loss_min = ctc_loss
+                        if(ctc_loss<loss_min):
+                            print('loss: ',ctc_loss,end=' ')
+                            self.snapshot(sess, 1)
+                            loss_min = ctc_loss
+                        else: self.snapshot(sess, iter)
                     if (iter+1) % cfg.VAL.VAL_STEP == 0 or loss_min==ctc_loss:
                         val_img_Batch,val_labels_Batch, val_label_len_Batch,val_time_step_Batch = \
                             sess.run([val_img_b,val_lb_b,val_lb_len_b,val_t_s_b])

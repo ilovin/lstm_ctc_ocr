@@ -16,5 +16,10 @@ class LSTM_test(Network):
         self.setup()
 
     def setup(self):
-        (self.feed('data','time_step_len')
-         .lstm(cfg.TRAIN.NUM_HID,cfg.TRAIN.NUM_LAYERS,name='logits'))
+        (self.feed('data')
+         .conv_single(5, 5, 32 ,1, 1, name='conv1',c_i=cfg.NCHANNELS)
+         .conv_single(5, 5, 32 ,1, 1, name='conv2')
+         .max_pool(2, 2, 2, 2, padding='VALID', name='pool1')
+         .conv_single(5, 5, 1 ,1, 1, name='conv4',relu=False))
+        (self.feed('conv4','time_step_len')
+         .lstm(cfg.TRAIN.NUM_HID,cfg.TRAIN.NUM_LAYERS,name='logits',img_shape=[-1,cfg.IMG_SHAPE[0]//cfg.POOL_SCALE,cfg.NUM_FEATURES//cfg.POOL_SCALE]))
