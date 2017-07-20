@@ -85,7 +85,8 @@ class Graph(object):
             self.global_step = tf.Variable(0,trainable=False)
            
         
-            self.loss = warpctc_tensorflow.ctc(activations=logits,flat_labels=self.labels,label_lengths=self.label_len,input_lengths=self.seq_len)
+            self.loss = warpctc_tensorflow.ctc(activations=logits,flat_labels=self.labels,
+                                               label_lengths=self.label_len,input_lengths=self.seq_len)
 
             self.cost = tf.reduce_mean(self.loss)
         
@@ -98,7 +99,7 @@ class Graph(object):
             #         momentum=FLAGS.momentum).minimize(self.cost,global_step=self.global_step)
             #optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate,
             #        momentum=FLAGS.momentum,use_nesterov=True).minimize(cost,global_step=global_step)
-            self.optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS.initial_learning_rate,
+            self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate,
                     beta1=FLAGS.beta1,beta2=FLAGS.beta2).minimize(self.loss,global_step=self.global_step)
            
             # Option 2: tf.contrib.ctc.ctc_beam_search_decoder
