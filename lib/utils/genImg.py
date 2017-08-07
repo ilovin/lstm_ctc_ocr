@@ -31,7 +31,7 @@ def run(num,path):
     global imgDir
     imgDir = path
     if not os.path.exists(path):
-        os.mkdir(path)
+        os.makedirs(path)
     with Pool(processes=numProcess) as pool:
          pool.map(generateImg,range(num))
 
