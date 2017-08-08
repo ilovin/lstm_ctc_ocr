@@ -1,4 +1,4 @@
-the pipline version of lstm_ctc_ocr, use
+the pipline version of lstm_ctc_ocr
 ## How to use
 1. run `python ./lib/utils/genImg.py` to generate the train images in `train/`, validation set in `val`and the file name shall has the format of `00000001_name.png`, the number of process is set to `16`.
 2. `python ./lib/lstm/utils/tf_records.py` to generate tf_records file, which includes both images and labels(the `img_path` shall be changed to your image_path)
