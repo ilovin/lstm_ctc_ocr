@@ -11,4 +11,6 @@ checkpoint*
 *.json
 *.swp
 *.swo
+.gdb*
 .idea/
+

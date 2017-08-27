@@ -97,6 +97,7 @@ class Network(object):
     @layer
     def bi_lstm(self, input, num_hids, num_layers, name,img_shape = None ,trainable=True):
         img,img_len = input[0],input[1]
+        img = tf.squeeze(img,axis=3)
         if img_shape:img =tf.reshape(img,shape = img_shape )
         with tf.variable_scope(name) as scope:
             #stack = tf.contrib.rnn.MultiRNNCell([cell,cell1] , state_is_tuple=True)

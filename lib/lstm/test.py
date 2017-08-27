@@ -1,4 +1,4 @@
-import sys
+import sys,math
 import os,shutil
 import collections
 import numpy as np
@@ -56,17 +56,22 @@ class SolverWrapper(object):
         total = correct = 0
         for file in os.listdir(testDir):
             timer.tic()
-            total+=1;
+            total+=1
 
-            if cfg.NCHANNELS == 1: img = cv2.imread(os.path.join(testDir,file),0)/255.
-            else : img = cv2.imread(os.path.join(testDir,file),1)/255.
-            img = cv2.resize(img,tuple(img_size))
+            if cfg.NCHANNELS == 1: img = cv2.imread(os.path.join(testDir,file),0)
+            else : img = cv2.imread(os.path.join(testDir,file),1)
             print(file,end=' ')
+            #img = cv2.resize(img,tuple(img_size))
+            w = img.shape[1]
+            width = math.ceil(img.shape[1] / cfg.POOL_SCALE) * cfg.POOL_SCALE
+            img = cv2.copyMakeBorder(img, 0, 0, 0, width - w, cv2.BORDER_CONSTANT, value=0).astype(np.float32) / 255.
+
             img = img.swapaxes(0,1)
-            img = np.reshape(img, [1,img_size[0],cfg.NUM_FEATURES])
+            img = np.reshape(img, [1,width,cfg.NUM_FEATURES])
+            #img = np.expand_dims(img,axis=0)
             feed_dict = {
                 self.net.data: img,
-                self.net.time_step_len: [cfg.TIME_STEP],
+                self.net.time_step_len: [img.shape[1]//cfg.POOL_SCALE],
                 self.net.keep_prob: 1.0
             }
             res = sess.run(fetches=dense_decoded[0], feed_dict=feed_dict)

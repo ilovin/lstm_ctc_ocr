@@ -1,8 +1,7 @@
 EXP_DIR: lstm_ctc
 LOG_DIR: lstm_ctc
 NET_NAME: LSTM
-MAX_CHAR_LEN: 6
-GPU_ID: 0
+GPU_ID: 1
 TRAIN:
   SOLVER: RMS
   DISPLAY: 100
