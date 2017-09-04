@@ -1,11 +1,11 @@
-- [master](https://github.com/ilovin/lstm_ctc_ocr/tree/master):
- - both standard ctc and warpCTC
- - read data at once
-- [dev](https://github.com/ilovin/lstm_ctc_ocr/tree/dev):
- - the pipline version of lstm_ctc_ocr, resize to same size
-- [beta](https://github.com/ilovin/lstm_ctc_ocr/tree/beta):
- - generate data on the fly
- - deal with multi-width image, padding to same width
+1. [master](https://github.com/ilovin/lstm_ctc_ocr/tree/master):  
+  - both standard ctc and warpCTC
+  - read data at one time
+2. [dev](https://github.com/ilovin/lstm_ctc_ocr/tree/dev):  
+  - the pipline version of lstm_ctc_ocr, resize to same size
+3. [beta](https://github.com/ilovin/lstm_ctc_ocr/tree/beta):  
+  - generate data on the fly(highest accuracy)
+  - deal with multi-width image, padding to same width
 
 ## How to use
 1. `./train.sh` for training `./test.sh`for testing

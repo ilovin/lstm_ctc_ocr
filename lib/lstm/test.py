@@ -63,7 +63,7 @@ class SolverWrapper(object):
             print(file,end=' ')
             #img = cv2.resize(img,tuple(img_size))
             w = img.shape[1]
-            width = math.ceil(img.shape[1] / cfg.POOL_SCALE) * cfg.POOL_SCALE
+            width = math.ceil(w / cfg.POOL_SCALE) * cfg.POOL_SCALE
             img = cv2.copyMakeBorder(img, 0, 0, 0, width - w, cv2.BORDER_CONSTANT, value=0).astype(np.float32) / 255.
 
             img = img.swapaxes(0,1)
@@ -71,7 +71,7 @@ class SolverWrapper(object):
             #img = np.expand_dims(img,axis=0)
             feed_dict = {
                 self.net.data: img,
-                self.net.time_step_len: [img.shape[1]//cfg.POOL_SCALE],
+                self.net.time_step_len: [w//cfg.POOL_SCALE],
                 self.net.keep_prob: 1.0
             }
             res = sess.run(fetches=dense_decoded[0], feed_dict=feed_dict)
