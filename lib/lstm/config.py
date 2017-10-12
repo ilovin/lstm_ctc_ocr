@@ -5,14 +5,12 @@ from time import strftime, localtime
 from easydict import EasyDict as edict
 
 __C = edict()
-# Consumers can get config by:
-#   from fast_rcnn_config import cfg
 cfg = __C
 
 # Default GPU device id
 __C.GPU_ID = 1
-# region proposal network (RPN) or not
-__C.POOL_SCALE = 2
+# According to the number of max pool, get the pool_scale
+__C.POOL_SCALE = 4
 __C.IMG_SHAPE = [180,60]
 __C.MAX_CHAR_LEN = 6
 __C.CHARSET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
