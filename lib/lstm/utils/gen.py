@@ -25,13 +25,14 @@ def gen_rand():
     buf = ""
     max_len = random.randint(cfg.MIN_LEN,cfg.MAX_LEN)
     for i in range(max_len):
-        buf += random.choice(cfg.CHARSET)
+        buf += random.choice(cfg.ORG_CHARSET)
     return buf
 
 def generateImg():
     captcha=ImageCaptcha(fonts=[cfg.FONT])
     if not os.path.exists(cfg.FONT):
-        print('cannot open the font')
+        print('canno'
+              't open the font')
     theChars=gen_rand()
     data=captcha.generate_image(theChars)
     return np.array(data),theChars
@@ -41,6 +42,7 @@ encode_maps,decode_maps = get_encode_decode_dict()
 def groupBatch(imgs,labels):
     max_w = -sys.maxsize
     time_steps = []
+    label_align = []
     label_len = []
     label_vec = []
     img_batch = []
@@ -50,9 +52,13 @@ def groupBatch(imgs,labels):
         max_w = max(max_w,w)
         time_steps.append(w//cfg.POOL_SCALE)
         code = [encode_maps[c] for c in list(labels[i])]
+        label_align.append(code)
         label_vec.extend(code)
         label_len.append(len(labels[i]))
     max_w = math.ceil(max_w/cfg.POOL_SCALE)*cfg.POOL_SCALE
+    max_label_len = max(label_len)
+    for i,ith_label in enumerate(label_align):
+        label_align[i]+=[encode_maps['>']]*(max_label_len-len(ith_label)) #padding with eos
     for img in imgs:
         if cfg.NCHANNELS==1: h,w = img.shape
         else: h,w,_ = img.shape
@@ -61,7 +67,7 @@ def groupBatch(imgs,labels):
         img = np.reshape(img,[-1,cfg.NUM_FEATURES])
         img_batch.append(img)
     #img_batch = np.array(img_batch)
-    return img_batch,label_vec,label_len,time_steps
+    return img_batch,label_align,label_vec,label_len,time_steps
 
 def generator(batch_size=32, vis=False):
     images = []
@@ -69,6 +75,8 @@ def generator(batch_size=32, vis=False):
     while True:
         try:
             im, label = generateImg()
+            h,w,c = im.shape
+            im = cv2.resize(im,(w*cfg.IMG_HEIGHT//h,cfg.IMG_HEIGHT)) # resize to the same height
             #img_size = cfg.IMG_SHAPE  # 160,60
             #im = cv2.resize(im,(img_size[0],img_size[1]))
             if cfg.NCHANNELS == 1:
@@ -96,8 +104,8 @@ def generator(batch_size=32, vis=False):
             labels.append(label)
 
             if len(images) == batch_size:
-                image_batch,label_vec,label_len,time_step = groupBatch(images,labels)
-                yield image_batch,label_vec,label_len,time_step
+                image_batch,label_align,label_vec,label_len,time_step = groupBatch(images,labels)
+                yield image_batch,label_align,label_vec,label_len,time_step
                 images = []
                 labels = []
         except Exception as e:
@@ -128,5 +136,6 @@ if __name__ == '__main__':
     # gen = generator(batch_size=32, vis=False)
     gen = get_batch(num_workers=24,batch_size=32,vis=False)
     while True:
-        images, labels,label_len,time_step =  next(gen)
+        images, label_align, labels,label_len,time_step =  next(gen)
+        print(label_align)
         print(len(images)," ",images[0].shape)

@@ -11,7 +11,7 @@ import os.path
 this_dir = os.path.dirname(__file__)
 sys.path.insert(0, this_dir + '/..')
 
-from lib.lstm.test import test_net
+from lib.lstm.test_icdar import test_net
 from lib.lstm.config import cfg, cfg_from_file, cfg_from_list, get_output_dir, get_log_dir
 from lib.networks.factory import get_network
 from easydict import EasyDict as edict
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     print(('Use network `{:s}` in training'.format(args.network_name)))
 
     test_net(network, imgdb,
-              testDir= './data/val/', #'data/demo'
-              output_dir=output_dir,
-              log_dir=log_dir,
-              restore=bool(int(args.restore)))
+            output_dir= output_dir,
+            log_dir=log_dir,
+            restore=bool(int(args.restore)),
+             testDir=os.path.join(cfg.ICDAR_FOLDER,'val'))

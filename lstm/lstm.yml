@@ -1,13 +1,17 @@
 EXP_DIR: lstm_ctc
 LOG_DIR: lstm_ctc
 NET_NAME: LSTM
-GPU_ID: 0
+GPU_ID: 1
+MODE: decode
 TRAIN:
   SOLVER: RMS
   DISPLAY: 100
   SNAPSHOT_ITERS: 2000
-  LEARNING_RATE: 0.0001
+  LEARNING_RATE: 0.00001
   MOMENTUM: 0.9
-  GAMMA: 1.0
-  STEPSIZE: 2000
+  GAMMA: 0.5
+  STEPSIZE: 30000
   WEIGHT_DECAY: 0.00001
+VAL:
+  VAL_STEP: 1000
+  TXT: annotation_val.txt #the validation folder shall be test/name.png

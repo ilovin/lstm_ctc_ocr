@@ -5,15 +5,14 @@ from ..lstm.config import cfg,get_encode_decode_dict
 from lib.lstm.utils.timer import Timer
 from lib.lstm.utils.training import accuracy_calculation,attn_accuracy_calculation
 from lib.lstm.utils.tf_records import read_tfrecord_and_decode_into_image_annotation_pair_tensors
-from lib.lstm.utils.read_icdar import get_batch,generator
+from lib.lstm.utils.read_gen import get_batch,generator
 
 encode_maps,decode_maps = get_encode_decode_dict()
 class SolverWrapper(object):
-    def __init__(self, sess, network, imgdb, pre_train,output_dir, logdir):
+    def __init__(self, sess, network, imgdb, output_dir, logdir):
         """Initialize the SolverWrapper."""
         self.net = network
         self.imgdb = imgdb
-        self.pre_train=pre_train
         self.output_dir = output_dir
         print('done')
         self.saver = tf.train.Saver(max_to_keep=100)
@@ -66,60 +65,30 @@ class SolverWrapper(object):
         org = self.restoreLabel(val_label_Batch,val_label_len_Batch)
         feed_dict = {
             self.net.data :           np.array(val_img_Batch),
+            self.net.time_step_len :  np.array(val_time_step_Batch),
             self.net.labels_align:    np.array(val_label_align_Batch),
             self.net.labels :         np.array(val_label_Batch),
-            self.net.time_step_len :  np.array(val_time_step_Batch),
             self.net.labels_len :     np.array(val_label_len_Batch),
             self.net.keep_prob:       1.0
         }
 
         # fetch_list = [dense_decoded]
         res = sess.run(fetches=dense_decoded, feed_dict=feed_dict)
-        acc = attn_accuracy_calculation(org,res,eos_token=cfg.EOS_TOKEN)
+        acc = attn_accuracy_calculation(org,res,eos_token=encode_maps['>'])
         print('accuracy: {:.5f}'.format(acc))
 
 
 
-    def train_model(self, sess, max_iters, restore=False):
+    def test_model(self, sess, max_iters, restore=False):
         #img_b,lb_b,lb_len_b,t_s_b = self.get_data(self.imgdb.path,batch_size= cfg.TRAIN.BATCH_SIZE,num_epochs=cfg.TRAIN.NUM_EPOCHS)
         #val_img_b, val_lb_b, val_lb_len_b,val_t_s_b = self.get_data(self.imgdb.val_path,batch_size=cfg.VAL.BATCH_SIZE,num_epochs=cfg.VAL.NUM_EPOCHS)
         #multi thread
-        train_gen = get_batch(num_workers=8,batch_size=cfg.TRAIN.BATCH_SIZE, vis=False,
-                txt_path = cfg.TRAIN.TXT) # folder=cfg.ICDAR_FOLDER
         val_gen = get_batch(num_workers=2,batch_size=cfg.VAL.BATCH_SIZE, vis=False,
-                txt_path = cfg.VAL.TXT)
-
-        #train_gen = generator(batch_size=cfg.TRAIN.BATCH_SIZE,
-        #        folder = cfg.SYN_FOLDER, txt_path = cfg.VAL.TXT, vis=False)
-        #val_gen = generator(batch_size=cfg.VAL.BATCH_SIZE,
-        #        folder = cfg.SYN_FOLDER, txt_path = cfg.VAL.TXT, vis=False)
-
+                folder = cfg.SYN_FOLDER, txt_path = cfg.VAL.TXT)
 
         loss, dense_decoded = self.net.build_loss()
 
-        tf.summary.scalar('loss', loss)
-        summary_op = tf.summary.merge_all()
-
-        # optimizer
-        if cfg.TRAIN.SOLVER == 'Adam':
-            opt = tf.train.AdamOptimizer(cfg.TRAIN.LEARNING_RATE)
-            lr = tf.Variable(cfg.TRAIN.LEARNING_RATE, trainable=False)
-        elif cfg.TRAIN.SOLVER == 'RMS':
-            opt = tf.train.RMSPropOptimizer(cfg.TRAIN.LEARNING_RATE)
-            lr = tf.Variable(cfg.TRAIN.LEARNING_RATE, trainable=False)
-        else:
-            lr = tf.Variable(cfg.TRAIN.LEARNING_RATE, trainable=False)
-            momentum = cfg.TRAIN.MOMENTUM
-            opt = tf.train.MomentumOptimizer(lr, momentum)
-
         global_step = tf.Variable(0, trainable=False)
-        with_clip = True
-        if with_clip:
-            tvars = tf.trainable_variables()
-            grads, norm = tf.clip_by_global_norm(tf.gradients(loss, tvars), 10.0)
-            train_op = opt.apply_gradients(list(zip(grads, tvars)), global_step=global_step)
-        else:
-            train_op = opt.minimize(loss, global_step=global_step)
 
         # intialize variables
         local_vars_init_op = tf.local_variables_initializer()
@@ -143,58 +112,26 @@ class SolverWrapper(object):
                 raise Exception('Check your pretrained {:s}'.format(ckpt.model_checkpoint_path))
 
         timer = Timer()
-        loss_min = 0.0
         first_val = True
+        restore_iter = 1
+        #if self.mode == 'decode':
         for iter in range(restore_iter, max_iters):
             timer.tic()
             # learning rate
-            if iter != 0 and iter % cfg.TRAIN.STEPSIZE == 0:
-                sess.run(tf.assign(lr, lr.eval() * cfg.TRAIN.GAMMA))
-
             # get one batch
-            img_Batch,label_align_Batch, label_Batch, label_len_Batch,time_step_Batch = next(train_gen)
-            # Subtract the mean pixel value from each pixel
-            feed_dict = {
-                self.net.data:          np.array(img_Batch),
-                self.net.labels_align:  np.array(label_align_Batch),
-                self.net.labels:        np.array(label_Batch),
-                self.net.time_step_len: np.array(time_step_Batch),
-                self.net.labels_len:    np.array(label_len_Batch),
-                self.net.keep_prob:     0.5
-            }
-
-            fetch_list = [loss,summary_op,train_op]
-            ctc_loss,summary_str, _ =  sess.run(fetches=fetch_list, feed_dict=feed_dict)
-
-            self.writer.add_summary(summary=summary_str, global_step=global_step.eval())
+            img_Batch,label_align_Batch, label_Batch, label_len_Batch,time_step_Batch = next(val_gen)
+            self.validation(sess, dense_decoded, img_Batch, label_align_Batch,
+                    label_Batch, label_len_Batch,time_step_Batch)
             _diff_time = timer.toc(average=False)
+            print('cost time: {}'.format(_diff_time))
 
-            if (iter) % (cfg.TRAIN.DISPLAY) == 0:
-                print('iter: %d / %d, total loss: %.7f, lr: %.7f'%\
-                        (iter, max_iters, ctc_loss ,lr.eval()),end=' ')
-                print('speed: {:.3f}s / iter'.format(_diff_time))
-            if (iter+1) % cfg.TRAIN.SNAPSHOT_ITERS == 0 or ctc_loss<loss_min:
-                if(ctc_loss<loss_min):
-                    print('loss: ',ctc_loss,end=' ')
-                    self.snapshot(sess, 1)
-                    loss_min = ctc_loss
-                else: self.snapshot(sess, iter)
-            if (iter+1) % cfg.VAL.VAL_STEP == 0 or loss_min==ctc_loss:
-                if first_val:
-                    val_img_Batch,val_label_align_Batch, val_label_Batch, \
-                    val_label_len_Batch,val_time_step_Batch = next(val_gen)
-                    #first_val=False
-                self.validation(sess, dense_decoded, val_img_Batch,
-                        val_label_align_Batch, val_label_Batch, 
-                        val_label_len_Batch,val_time_step_Batch)
-
-def train_net(network, imgdb, pre_train,output_dir, log_dir, max_iters=40000, restore=False):
+def test_net(network, imgdb, output_dir, log_dir, max_iters=40000, restore=False):
     config = tf.ConfigProto(allow_soft_placement=True)
     config.gpu_options.per_process_gpu_memory_fraction = cfg.GPU_USAGE
     config.gpu_options.allow_growth = True
     config.gpu_options.allocator_type = 'BFC'
     with tf.Session(config=config) as sess:
-        sw = SolverWrapper(sess, network, imgdb, pre_train,output_dir, logdir= log_dir)
+        sw = SolverWrapper(sess, network, imgdb, output_dir, logdir= log_dir)
         print('Solving...')
-        sw.train_model(sess, max_iters, restore=restore)
+        sw.test_model(sess, max_iters, restore=restore)
         print('done solving')

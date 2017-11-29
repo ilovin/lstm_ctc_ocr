@@ -9,6 +9,7 @@ tmp/
 __pycache__/
 checkpoint*
 *.json
+*.bak
 *.swp
 *.swo
 .gdb*

@@ -7,23 +7,56 @@ from easydict import EasyDict as edict
 __C = edict()
 cfg = __C
 
+__C.MODE = 'decode' #train or decode
+__C.SYN_FOLDER = '/data/smb/dataset/syn_word'
+__C.ICDAR_FOLDER = '/data/smb/dataset/ocr/wr13/'
 # Default GPU device id
 __C.GPU_ID = 1
+__C.GPU_USAGE = 0.9
 # According to the number of max pool, get the pool_scale
-__C.POOL_SCALE = 4
-__C.IMG_SHAPE = [180,60]
-__C.MAX_CHAR_LEN = 6
-__C.CHARSET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-__C.NCLASSES = len(__C.CHARSET)+2
+__C.POOL_SCALE = 8
+#__C.IMG_SHAPE = [180,60]
+#__C.MAX_CHAR_LEN = 6
+#__C.CHARSET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-&()'"
+
+#GO EOS UNKOWN #__C.GO_TOKEN = 1 #__C.EOS_TOKEN = 2 #__C.UNKOWN_TOKEN = 3 <ctc_blank> = 0
+__C.GO_TOKEN = 1
+__C.EOS_TOKEN = 2
+__C.UNKOWN_TOKEN = 3
+__C.ORG_CHARSET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.@#$%^&*()-=<>"
+__C.CHARSET = "⍺βɤ"+__C.ORG_CHARSET #GO,EOS,UNKNOWN
+__C.NCLASSES = len(__C.CHARSET)+2 #<ctc blank> & <null>
+#for gernerating image
 __C.MIN_LEN = 4
 __C.MAX_LEN = 6
+__C.MAX_DECODE_STEP = 25 #max decode word length
 __C.FONT = 'fonts/Ubuntu-M.ttf'
+
+__C.IMG_HEIGHT=32
 __C.NCHANNELS = 1
-__C.NUM_FEATURES=__C.IMG_SHAPE[1]*__C.NCHANNELS
-__C.TIME_STEP = __C.IMG_SHAPE[0]//__C.POOL_SCALE
+__C.NUM_FEATURES=__C.IMG_HEIGHT*__C.NCHANNELS
+__C.USE_FLOAT16 = False
+#__C.TIME_STEP = __C.IMG_SHAPE[0]//__C.POOL_SCALE
 
 __C.NET_NAME = 'lstm'
+
+__C.RNN = edict()
+
+__C.RNN.CELL_TYPE = 'lstm' # lstm, gru
+__C.RNN.HIDDEN_UNITS = 1024
+__C.RNN.DEPTH = 2
+__C.RNN.ATTEN_TYPE = 'bahdanau' # or luong
+__C.RNN.EMBEDD_SIZE = 512
+__C.RNN.USE_RESIDUAL = False
+__C.RNN.USE_DROPOUT = True
+__C.RNN.IS_ATTEN_INPUT_FEEDING = False # 'Use input feeding method in attentional decoder'
+__C.RNN.MAX_GRADIENT_NORM  = 1.0
+__C.RNN.BEAM_WIDTH = 4
+__C.RNN.IS_USE_BEAMSEARCH = True
+
+
 __C.TRAIN = edict()
+__C.TRAIN.TXT='annotation_train.txt'
 # Adam, Momentum, RMS
 __C.TRAIN.SOLVER = 'Adam'
 #__C.TRAIN.SOLVER = 'Momentum'
@@ -40,7 +73,7 @@ __C.TRAIN.NUM_EPOCHS = 2000
 
 __C.TRAIN.NUM_HID = 128
 __C.TRAIN.NUM_LAYERS = 2
-__C.TRAIN.BATCH_SIZE = 32
+__C.TRAIN.BATCH_SIZE = 16
 
 # Iterations between snapshots
 __C.TRAIN.SNAPSHOT_ITERS = 5000
@@ -48,9 +81,10 @@ __C.TRAIN.SNAPSHOT_PREFIX = 'lstm'
 __C.TRAIN.SNAPSHOT_INFIX = ''
 
 __C.VAL = edict()
-__C.VAL.VAL_STEP = 500
+__C.VAL.TXT='annotation_test.txt'
+__C.VAL.VAL_STEP = 1000
 __C.VAL.NUM_EPOCHS = 1000
-__C.VAL.BATCH_SIZE = 128
+__C.VAL.BATCH_SIZE = 64
 __C.VAL.PRINT_NUM = 5
 
 __C.RNG_SEED = 3
@@ -60,16 +94,16 @@ __C.TEST = edict()
 __C.EXP_DIR = 'default'
 __C.LOG_DIR = 'default'
 
-__C.SPACE_INDEX = 0
-__C.SPACE_TOKEN = ''
+__C.BLANK_INDEX = 0
+__C.BLANK_TOKEN = ''
 def get_encode_decode_dict():
     encode_maps = {}
     decode_maps = {}
     for i, char in enumerate(__C.CHARSET, 1):
         encode_maps[char] = i
         decode_maps[i] = char
-    encode_maps[__C.SPACE_TOKEN] = __C.SPACE_INDEX
-    decode_maps[__C.SPACE_INDEX] = __C.SPACE_TOKEN
+    encode_maps[__C.BLANK_TOKEN] = __C.BLANK_INDEX
+    decode_maps[__C.BLANK_INDEX] = __C.BLANK_TOKEN
     return encode_maps,decode_maps
 
 

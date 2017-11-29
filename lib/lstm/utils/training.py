@@ -23,6 +23,23 @@ def get_label_and_len_from_fnames(fnames_tensor):
     labels,label_len = tf.py_func(get_label_and_len,[fnames_tensor],tf.int32)
     return labels,label_len
 
+def attn_accuracy_calculation(original_seq,decoded_seq,eos_token=0,isPrint = True):
+    if  len(original_seq)!=len(decoded_seq):
+        print('original lengths is different from the decoded_seq,please check again')
+        return 0
+    count = 0
+    for i,origin_label in enumerate(original_seq):
+        decoded_label = []
+        for j in decoded_seq[i]:
+            if j == eos_token:break
+            decoded_label.append(j)
+        #decoded_label  = [j for j in decoded_seq[i] if j!=ignore_value]
+        org_label = [l for l in origin_label if l!=eos_token]
+        if isPrint and i<cfg.VAL.PRINT_NUM:
+            print('seq{0:4d}: origin: {1} decoded:{2}'.format(i,origin_label,decoded_label))
+        if org_label == decoded_label: count+=1
+    return count*1.0/len(original_seq)
+
 def accuracy_calculation(original_seq,decoded_seq,ignore_value=0,isPrint = True):
     if  len(original_seq)!=len(decoded_seq):
         print('original lengths is different from the decoded_seq,please check again')
