@@ -7,16 +7,6 @@ from lib.lstm.utils.training import accuracy_calculation
 from lib.lstm.utils.tf_records import read_tfrecord_and_decode_into_image_annotation_pair_tensors
 from lib.lstm.utils.gen import get_batch
 
-# charset = cfg.CHARSET
-# SPACE_INDEX = 0
-# SPACE_TOKEN = ''
-# encode_maps = {}
-# decode_maps = {}
-# for i, char in enumerate(charset, 1):
-#     encode_maps[char] = i
-#     decode_maps[i] = char
-# encode_maps[SPACE_TOKEN] = SPACE_INDEX
-# decode_maps[SPACE_INDEX] = SPACE_TOKEN
 class SolverWrapper(object):
     def __init__(self, sess, network, imgdb, pre_train,output_dir, logdir):
         """Initialize the SolverWrapper."""
@@ -82,16 +72,10 @@ class SolverWrapper(object):
         summary_op = tf.summary.merge_all()
 
         # optimizer
-        if cfg.TRAIN.SOLVER == 'Adam':
-            opt = tf.train.AdamOptimizer(cfg.TRAIN.LEARNING_RATE)
-            lr = tf.Variable(cfg.TRAIN.LEARNING_RATE, trainable=False)
-        elif cfg.TRAIN.SOLVER == 'RMS':
-            opt = tf.train.RMSPropOptimizer(cfg.TRAIN.LEARNING_RATE)
-            lr = tf.Variable(cfg.TRAIN.LEARNING_RATE, trainable=False)
-        else:
-            lr = tf.Variable(cfg.TRAIN.LEARNING_RATE, trainable=False)
-            momentum = cfg.TRAIN.MOMENTUM
-            opt = tf.train.MomentumOptimizer(lr, momentum)
+        lr = tf.Variable(cfg.TRAIN.LEARNING_RATE, trainable=False)
+        if cfg.TRAIN.SOLVER == 'Adam': opt = tf.train.AdamOptimizer(lr)
+        elif cfg.TRAIN.SOLVER == 'RMS': opt = tf.train.RMSPropOptimizer(lr)
+        else: opt = tf.train.MomentumOptimizer(lr, cfg.TRAIN.MOMENTUM)
 
         global_step = tf.Variable(0, trainable=False)
         with_clip = True
