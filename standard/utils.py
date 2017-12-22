@@ -6,7 +6,7 @@ import random
 import cv2,time
 from tensorflow.python.client import device_lib
 
-#26*2 + 10 digit + blank + space
+#blank(warp ctc) 26*2 + 10 digit + blank(standard ctc)
 num_classes=26+26+10+1+1
 #num_train_samples = 128000
 

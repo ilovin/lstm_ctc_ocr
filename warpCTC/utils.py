@@ -6,7 +6,7 @@ import random
 import cv2,time
 from tensorflow.python.client import device_lib
 
-#26*2 + 10 digit + blank + space
+#blank(warpctc) + 10 digit +26*2 + blank(standard ctc)
 charset = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 num_classes=len(charset)+1+1
 #num_train_samples = 128000
