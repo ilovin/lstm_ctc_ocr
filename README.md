@@ -1,10 +1,10 @@
-- [master](https://github.com/ilovin/lstm_ctc_ocr/tree/master):
+1. [master](https://github.com/ilovin/lstm_ctc_ocr/tree/master):
  - harder to converge compare to the beta version
  - both standard ctc and warpCTC
  - read data at once
-- [dev](https://github.com/ilovin/lstm_ctc_ocr/tree/dev):
+2. [dev](https://github.com/ilovin/lstm_ctc_ocr/tree/dev):
  - the pipline version of lstm_ctc_ocr, resize to same size
-- [beta](https://github.com/ilovin/lstm_ctc_ocr/tree/beta):
+3. [beta](https://github.com/ilovin/lstm_ctc_ocr/tree/beta):
  - generate data on the fly
  - deal with multi-width image, padding to same width
 
