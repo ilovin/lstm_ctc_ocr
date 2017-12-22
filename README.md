@@ -1,12 +1,13 @@
-- [master](https://github.com/ilovin/lstm_ctc_ocr/tree/master):
- - harder to converge compare to the beta version
- - both standard ctc and warpCTC
- - read data at once
+- [old master](https://github.com/ilovin/lstm_ctc_ocr/tree/backup):
+    - harder to converge compare to the beta version
+    - both standard ctc and warpCTC
+    - read data at once
 - [dev](https://github.com/ilovin/lstm_ctc_ocr/tree/dev):
- - the pipline version of lstm_ctc_ocr, resize to same size
+    - the pipline version of lstm_ctc_ocr, resize to same size
+    - use tf.records
 - [beta](https://github.com/ilovin/lstm_ctc_ocr/tree/beta):
- - generate data on the fly
- - deal with multi-width image, padding to same width
+    - generate data on the fly
+    - deal with multi-width image, padding to same width
 
 ## How to use
 1. run `python genImg.py` to generate the train images in `train/`, validation set in `test/`and the file name shall has the format of `00000001_name.png`, the number of process is set to `16`.
