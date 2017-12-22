@@ -1,4 +1,5 @@
 - [master](https://github.com/ilovin/lstm_ctc_ocr/tree/master):
+ - harder to converge compare to the beta version
  - both standard ctc and warpCTC
  - read data at once
 - [dev](https://github.com/ilovin/lstm_ctc_ocr/tree/dev):
@@ -8,13 +9,13 @@
  - deal with multi-width image, padding to same width
 
 ## How to use
-1. `./train.sh` for training `./test.sh`for testing
-2. `./lib/utils/genImg.py` for generate some data for further testing
+1. run `python genImg.py` to generate the train images in `train/`, validation set in `test/`and the file name shall has the format of `00000001_name.png`, the number of process is set to `16`.
+2. `cd standard` or `cd warpCTC`
+3. run `python lstm_ocr.py` to training    
 
 Notice that,  
-the beta & pipline version use warpCTC as default : please install the [warpCTC tensorflow_binding](https://github.com/baidu-research/warp-ctc/tree/master/tensorflow_binding) first  
-if your machine does not support warpCTC, then use `standard` ctc version in [the master branch](https://github.com/ilovin/lstm_ctc_ocr/tree/master)
-- standard CTC: use `tf.nn.ctc_loss` to calculate the ctc loss
+- standard : use `tf.nn.ctc_loss` to calculate the ctc loss
+- warpCTC : please install the [warpCTC tensorflow_binding](https://github.com/baidu-research/warp-ctc/tree/master/tensorflow_binding) first
 
 ### Dependency
 - python 3  
@@ -42,7 +43,6 @@ if you want to use your own data, the height of the image shall be the same.
 ### Result
 The accurary can be more that 95%
 ![acc](https://i.loli.net/2017/08/28/59a2ee75a2a0a.png)
-
 
 Read [this blog](https://ilovin.github.io/2017-04-06/tensorflow-lstm-ctc-ocr/) for more details and [this blog](http://ilovin.github.io/2017-04-23/tensorflow-lstm-ctc-input-output/) for how to
 use `tf.nn.ctc_loss` or `warpCTC`
