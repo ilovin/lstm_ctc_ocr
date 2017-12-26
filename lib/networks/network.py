@@ -97,21 +97,22 @@ class Network(object):
     @layer
     def bi_lstm(self, input, num_hids, num_layers, name,img_shape = None ,trainable=True):
         img,img_len = input[0],input[1]
-        img = tf.squeeze(img,axis=3)
+        #img = tf.squeeze(img,axis=3)
         if img_shape:img =tf.reshape(img,shape = img_shape )
         with tf.variable_scope(name) as scope:
             #stack = tf.contrib.rnn.MultiRNNCell([cell,cell1] , state_is_tuple=True)
-            lstm_fw_cell = tf.contrib.rnn.LSTMCell(num_hids/2,state_is_tuple=True)
-            lstm_bw_cell = tf.contrib.rnn.LSTMCell(num_hids/2,state_is_tuple=True)
+            lstm_fw_cell = tf.contrib.rnn.LSTMCell(num_hids//2,state_is_tuple=True)
+            lstm_bw_cell = tf.contrib.rnn.LSTMCell(num_hids//2,state_is_tuple=True)
 
             output,_ = tf.nn.bidirectional_dynamic_rnn(lstm_fw_cell,lstm_bw_cell,img,img_len,dtype=tf.float32)
             # output_bw_reverse = tf.reverse_sequence(output[1],img_len,seq_axis=1)
             output = tf.concat(output,axis=2)
 
-            stack_cell = tf.contrib.rnn.MultiRNNCell(
-                [tf.contrib.rnn.LSTMCell(num_hids, state_is_tuple=True) for _ in range(num_layers)],
-                state_is_tuple=True)
-            lstm_out,last_state = tf.nn.dynamic_rnn(stack_cell,output,img_len,dtype=tf.float32)
+            #stack_cell = tf.contrib.rnn.MultiRNNCell(
+            #    [tf.contrib.rnn.LSTMCell(num_hids, state_is_tuple=True) for _ in range(num_layers)],
+            #    state_is_tuple=True)
+            #lstm_out,last_state = tf.nn.dynamic_rnn(stack_cell,output,img_len,dtype=tf.float32)
+            lstm_out = output
             shape = tf.shape(img)
             batch_size, time_step = shape[0],shape[1]
             lstm_out = tf.reshape(lstm_out,[-1,num_hids])
@@ -157,7 +158,7 @@ class Network(object):
         return concat
 
     @layer
-    def conv_single(self, input, k_h, k_w, c_o, s_h, s_w, name, c_i=None, biased=True,relu=True, padding=DEFAULT_PADDING, trainable=True):
+    def conv_single(self, input, k_h, k_w, c_o, s_h, s_w, name, c_i=None, bn=False, biased=True,relu=True, padding=DEFAULT_PADDING, trainable=True):
         """ contribution by miraclebiu, and biased option"""
         self.validate_padding(padding)
         if not c_i: c_i = input.get_shape()[-1]
@@ -171,16 +172,23 @@ class Network(object):
             if biased:
                 biases = self.make_var('biases', [c_o], init_biases, trainable)
                 conv = convolve(input, kernel)
+                bias = tf.nn.bias_add(conv, biases)
+                if bn:
+                    bn_layer = tf.contrib.layers.batch_norm(bias, scale=True,
+                                                            center=True, is_training=True, scope=name)
+                else:bn_layer = bias
                 if relu:
-                    bias = tf.nn.bias_add(conv, biases)
-
-                    return tf.nn.relu(bias)
-                return tf.nn.bias_add(conv, biases)
+                    return tf.nn.relu(bn_layer)
+                else: return bn_layer
             else:
                 conv = convolve(input, kernel)
+                if bn:
+                    bn_layer = tf.contrib.layers.batch_norm(conv, scale=True,
+                                                            center=True, is_training=True, scope=name)
+                else:bn_layer = conv
                 if relu:
-                    return tf.nn.relu(conv)
-                return conv
+                    return tf.nn.relu(bn_layer)
+                return bn_layer
 
     @layer
     def conv(self, input, k_h, k_w, c_o, s_h, s_w, name, c_i=None, biased=True,relu=True, padding=DEFAULT_PADDING, trainable=True):
@@ -349,6 +357,15 @@ class Network(object):
                               strides=[1, s_h, s_w, 1],
                               padding=padding,
                               name=name)
+
+    @layer
+    def reshape_squeeze_layer(self, input, d, name):
+        #N,H,W,C-> N,H*W,C
+        input_shape = tf.shape(input)
+        return tf.reshape(input, \
+                          [input_shape[0], \
+                           input_shape[1]*input_shape[2], \
+                           int(d)])
 
     @layer
     def reshape_layer(self, input, d, name):

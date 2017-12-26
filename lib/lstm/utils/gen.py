@@ -44,11 +44,14 @@ def groupBatch(imgs,labels):
     label_len = []
     label_vec = []
     img_batch = []
+    nh = cfg.IMG_HEIGHT
     for i,img in enumerate(imgs):
         if cfg.NCHANNELS==1: h,w = img.shape
         else: h,w,_ = img.shape
-        max_w = max(max_w,w)
-        time_steps.append(w//cfg.POOL_SCALE)
+        nw = int(nh/h*w)
+        max_w = max(max_w,nw)
+        imgs[i] = cv2.resize(img,(nw,nh))
+        time_steps.append(nw//cfg.POOL_SCALE+cfg.OFFSET_TIME_STEP)
         code = [encode_maps[c] for c in list(labels[i])]
         label_vec.extend(code)
         label_len.append(len(labels[i]))

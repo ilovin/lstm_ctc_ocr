@@ -13,3 +13,4 @@ checkpoint*
 *.swo
 .gdb*
 .idea/
+*~
