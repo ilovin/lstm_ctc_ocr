@@ -21,7 +21,7 @@ def parse_args():
                         default=0, type=int)
     parser.add_argument('--iters', dest='max_iters',
                         help='number of iterations to train',
-                        default=700000, type=int)
+                        default=1000000, type=int)
     parser.add_argument('--cfg', dest='cfg_file',
                         help='optional config file',
                         default=None, type=str)

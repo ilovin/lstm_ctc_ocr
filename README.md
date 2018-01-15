@@ -5,21 +5,16 @@
 - [dev](https://github.com/ilovin/lstm_ctc_ocr/tree/dev):
     - the pipline version of lstm_ctc_ocr, resize to same size
     - use tf.records
-- [beta](https://github.com/ilovin/lstm_ctc_ocr/tree/beta):
+- [beta](https://github.com/ilovin/lstm_ctc_ocr/tree/beta) (current):
     - generate data on the fly
     - deal with multi-width image, padding to same width
 
 ## How to use
-1. run `python genImg.py` to generate the train images in `train/`, validation set in `test/`and the file name shall has the format of `00000001_name.png`, the number of process is set to `16`.
-2. `cd standard` or `cd warpCTC`
-3. run `python lstm_ocr.py` to training    
+1. ./train.sh
 
-Notice that,  
-- standard : use `tf.nn.ctc_loss` to calculate the ctc loss
-- warpCTC : please install the [warpCTC tensorflow_binding](https://github.com/baidu-research/warp-ctc/tree/master/tensorflow_binding) first
 
 ### Dependency
-- python 3  
+- python 3
 - tensorflow 1.0.1  
 - [captcha](https://pypi.python.org/pypi/captcha)
 - [warpCTC tensorflow_binding](https://github.com/baidu-research/warp-ctc/tree/master/tensorflow_binding)

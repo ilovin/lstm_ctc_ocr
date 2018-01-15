@@ -11,12 +11,14 @@ cfg = __C
 
 # Default GPU device id
 __C.GPU_ID = 1
+__C.GPU_USAGE = 0.9
 __C.OFFSET_TIME_STEP = -1
 # region proposal network (RPN) or not
 __C.POOL_SCALE = 4
-#__C.IMG_SHAPE = [180,60]
+__C.IMG_SHAPE = [32,100]
 __C.IMG_HEIGHT = 32
 __C.MAX_CHAR_LEN = 6
+__C.BLANK_TOKEN=0
 __C.CHARSET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 __C.NCLASSES = len(__C.CHARSET)+2
 __C.MIN_LEN = 4
@@ -33,6 +35,7 @@ __C.TRAIN.SOLVER = 'Adam'
 #__C.TRAIN.SOLVER = 'Momentum'
 # __C.TRAIN.SOLVER = 'RMS'
 # learning rate
+__C.TRAIN.TXT = 'annotation_train.txt'
 __C.TRAIN.WEIGHT_DECAY = 0.0005
 __C.TRAIN.LEARNING_RATE = 0.01
 __C.TRAIN.MOMENTUM = 0.9
@@ -52,6 +55,7 @@ __C.TRAIN.SNAPSHOT_PREFIX = 'lstm'
 __C.TRAIN.SNAPSHOT_INFIX = ''
 
 __C.VAL = edict()
+__C.VAL.TXT = 'annotation_val.txt'
 __C.VAL.VAL_STEP = 1000
 __C.VAL.NUM_EPOCHS = 1000
 __C.VAL.BATCH_SIZE = 128

@@ -61,10 +61,8 @@ class SolverWrapper(object):
         return np.array(label_lst)
 
     def train_model(self, sess, max_iters, restore=False):
-        #img_b,lb_b,lb_len_b,t_s_b = self.get_data(self.imgdb.path,batch_size= cfg.TRAIN.BATCH_SIZE,num_epochs=cfg.TRAIN.NUM_EPOCHS)
-        #val_img_b, val_lb_b, val_lb_len_b,val_t_s_b = self.get_data(self.imgdb.val_path,batch_size=cfg.VAL.BATCH_SIZE,num_epochs=cfg.VAL.NUM_EPOCHS)
         train_gen = get_batch(num_workers=12,batch_size=cfg.TRAIN.BATCH_SIZE,vis=False)
-        val_gen = get_batch(num_workers=2,batch_size=cfg.VAL.BATCH_SIZE,vis=False)
+        val_gen = get_batch(num_workers=1,batch_size=cfg.VAL.BATCH_SIZE,vis=False)
 
         loss, dense_decoded = self.net.build_loss()
 
@@ -166,8 +164,9 @@ class SolverWrapper(object):
 
 def train_net(network, imgdb, pre_train,output_dir, log_dir, max_iters=40000, restore=False):
     config = tf.ConfigProto(allow_soft_placement=True)
-    config.gpu_options.per_process_gpu_memory_fraction = 0.9
+    config.gpu_options.per_process_gpu_memory_fraction = cfg.GPU_USAGE
     config.gpu_options.allocator_type = 'BFC'
+    config.gpu_options.allow_growth = True
     with tf.Session(config=config) as sess:
         sw = SolverWrapper(sess, network, imgdb, pre_train,output_dir, logdir= log_dir)
         print('Solving...')

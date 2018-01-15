@@ -1,7 +1,7 @@
 EXP_DIR: lstm_ctc
 LOG_DIR: lstm_ctc
 NET_NAME: LSTM
-GPU_ID: 1
+GPU_ID: 0
 TRAIN:
   SOLVER: Adam
   DISPLAY: 100
